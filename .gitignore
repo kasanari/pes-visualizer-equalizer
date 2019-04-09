@@ -63,3 +63,4 @@ dkms.conf
 *.sct
 *.htm
 *.Bak
+RTE_Components.h
