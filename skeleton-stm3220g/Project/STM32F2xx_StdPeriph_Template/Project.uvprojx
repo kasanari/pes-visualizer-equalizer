@@ -10,12 +10,13 @@
       <TargetName>STM322xG_EVAL</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060300::V5.06 update 3 (build 300)::ARMCC</pCCUsed>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
+      <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32F207IG</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F2xx_DFP.2.6.0</PackID>
+          <PackID>Keil.STM32F2xx_DFP.2.9.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IRAM(0x20000000,0x20000) IROM(0x08000000,0x100000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -183,6 +184,7 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>0</RvdsVP>
+            <RvdsMve>0</RvdsMve>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -323,6 +325,7 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -335,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STM322xG_EVAL, STM32F2XX, USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\Utilities\STM32_EVAL\STM322xG_EVAL;..\..\Libraries\CMSIS\Device\ST\STM32F2xx\Include;..\..\Libraries\STM32F2xx_StdPeriph_Driver\inc;..\..\Utilities\STM32_EVAL\Common;..\..\Utilities\STM32_EVAL\STM322xG_EVAL;..\STM32F2xx_StdPeriph_Template;..\..\FreeRTOS</IncludePath>
+              <IncludePath>..\..\..\Utilities\STM32_EVAL\STM322xG_EVAL;..\..\Libraries\CMSIS\Device\ST\STM32F2xx\Include;..\..\Libraries\STM32F2xx_StdPeriph_Driver\inc;..\..\Utilities\STM32_EVAL\Common;..\..\Utilities\STM32_EVAL\STM322xG_EVAL;..\STM32F2xx_StdPeriph_Template;..\..\FreeRTOS;..\..\Utilities\STM32_Audio\Common;..\..\Utilities\STM32_Audio\STM322xG_EVAL</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -388,6 +391,16 @@
               <FileName>system_stm32f2xx.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\system_stm32f2xx.c</FilePath>
+            </File>
+            <File>
+              <FileName>fft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\fft.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm322xg_audio_recorder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Utilities\STM32_Audio\STM322xG_EVAL\stm322xg_audio_recorder.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -468,6 +481,11 @@
               <FileName>stm32f2xx_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Libraries\STM32F2xx_StdPeriph_Driver\src\stm32f2xx_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\STM32F2xx_StdPeriph_Driver\src\stm32f2xx_adc.c</FilePath>
             </File>
           </Files>
         </Group>
