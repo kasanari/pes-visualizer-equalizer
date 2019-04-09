@@ -1,4 +1,5 @@
-#include "stm322xg_eval_ioe.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #ifndef _FFT_H
 #define _FFT_H
