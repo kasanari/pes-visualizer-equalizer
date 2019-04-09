@@ -31,6 +31,7 @@
 #include "LCD.h"
 #include "TS.h"
 #include "stm322xg_eval_ioe.h"
+#include "fft.h"
 
 /* Private variables ---------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
@@ -232,6 +233,7 @@ int main (void){
 	initDisplay();
 	setupButtons();
 	
+	setupFFT(1);
 	xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
   xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
   xTaskCreate(ledTask, "led", 100, NULL, 1, NULL);
