@@ -23,7 +23,7 @@ uint16_t* audio_buffer_2;
 uint8_t	 buffer_select = 1;
 
 uint32_t STM32_AudioRec_Update(uint8_t** pbuf, uint32_t* pSize) {
-	portBASE_TYPE higherPrio;
+	//portBASE_TYPE higherPrio;
 	*pSize = FFT_LENGTH;
   *pbuf = (buffer_select) ? (uint8_t*)audio_buffer_1 : (uint8_t*)audio_buffer_2;
 	/* Toggle the buffer select */
@@ -48,28 +48,29 @@ static uint16_t reverse_bits(uint16_t bits, uint16_t n_bits) {
 }
 
 
-uint16_t* FFT(uint16_t *samples, uint16_t fft_length) {
+int FFT(double *real_in, double *imag_in, double *real_out, double *imag_out, uint16_t fft_length) {
 	uint8_t levels = 0;
 	uint8_t i, j, k;
 	double w_m_r, w_m_i, w_i, w_r, t_r, t_i, u_i, u_r;
 	uint8_t rev_index;
 	uint8_t m;
-	volatile double A_real[4] = {0, 0, 0, 0};
-	volatile double A_imag[4] = {0, 0, 0, 0};
+	double *A_real = real_out;
+	double *A_imag = imag_out;
 	double w_r_temp;
-	uint16_t input[4] = {2, 1, 0, 1};
+	//uint16_t input[4] = {2, 1, 0, 1};
 	
 	for (i = fft_length; i > 1; i >>= 1) { // Take the two-logarithm of fft_length to determine number of steps
 		levels++;
 	}
 	
 	if ((1U << levels) != fft_length) { // Verify that fft_length is an exponential of 2
-		return NULL;
+		return 0;
 	}
 	
 	for (i = 0; i < fft_length; i++) {
 		rev_index = reverse_bits(i, levels);
-		A_real[rev_index] = input[i];
+		A_real[rev_index] = real_in[i];
+		A_imag[rev_index] = imag_in[i];
 	}
 	
 	for (i = 0; i <= levels; i++) {
@@ -104,19 +105,44 @@ uint16_t* FFT(uint16_t *samples, uint16_t fft_length) {
 		}
 	}
 	
-	return 0;
+	return 1;
+}
+
+int inverse_FFT(double *real_in, double *imag_in, double *real_out, double *imag_out, uint16_t fft_length) {
+	int status;
+	int i;
+	status = FFT(imag_in, real_in, imag_out, real_out, 4);
+	if (status == 0) {
+		return 0;
+	} else {
+		for (i = 0; i < fft_length; i++) {
+			real_out[i] /= fft_length;
+			imag_out[i] /= fft_length;
+		}
+		return 1;
+	}
 }
 
 void transformTask(void *params) {
-	uint16_t* output;
-	uint16_t input[4] = {2, 1, 0, 1};
+
+	double input_real[4] = {1, 1, 1, 1};
+	double input_imag[4] = {0, 0, 0, 0};
+	
+	double output_real[4] = {0, 0, 0, 0};
+	double output_imag[4] = {0, 0, 0, 0};
+	
+	double inverse_real[4] = {0, 0, 0, 0};
+	double inverse_imag[4] = {0, 0, 0, 0};
+	
 	volatile uint16_t bits;
 	volatile uint16_t result;
 	
 	bits = 0;
 	for (;;) {
 		
-		output = FFT(input, 4);
+		FFT(input_real, input_imag, output_real, output_imag, 4);
+		
+		inverse_FFT(output_real, output_imag, inverse_real, inverse_imag, 4);
 		
 		// Do FFT
 		/*if (buffer_select == 1) {
