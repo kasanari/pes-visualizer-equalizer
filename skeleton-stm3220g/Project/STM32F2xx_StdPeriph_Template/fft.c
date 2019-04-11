@@ -108,6 +108,12 @@ int FFT(double *real_in, double *imag_in, double *real_out, double *imag_out, ui
 	return 1;
 }
 
+int complex_abs(double *real_in, double *imag_in, double *magnitude, uint16_t length) {
+	for (int i = 0; i < length; i++) {
+		magnitude[i] = sqrt(real_in[i]*real_in[i]+imag_in[i]*imag_in[i]);
+	}
+}
+
 int inverse_FFT(double *real_in, double *imag_in, double *real_out, double *imag_out, uint16_t fft_length) {
 	int status;
 	int i;
