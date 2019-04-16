@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define FFT_LENGTH 256 				/* number of frequency bins/segments */
 
@@ -129,16 +130,66 @@ int inverse_FFT(double *real_in, double *imag_in, double *real_out, double *imag
 	}
 }
 
-void transformTask(void *params) {
+// Utility function to verify that two buffers contain the same values
+bool buffer_compare(double *buf1, double *buf2, int n) {
+	for (int i = 0; i < n; i++) {
+		if (buf1[i] != buf2[i]) {
+			return false;
+		}
+	}
+	return true;
+}
 
+static bool check(u8 assertion, char *name) {
+  if (!assertion) {
+    printf("Test %s failed\n", name);
+		return false;
+  } else {
+		printf("Test %s passed\n", name);
+		return true;
+	}
+}
+
+void fft_test(double *real_in, double *imag_in, double *real_out_expected, double *imag_out_expected, bool* test_results, int n) {
+	
+	double *output_real = calloc(n, sizeof(double));
+	double *output_imag = calloc(n, sizeof(double));
+	
+	double *inverse_real = calloc(n, sizeof(double));
+	double *inverse_imag = calloc(n, sizeof(double));
+	
+	// Check that the output is what we expect
+	FFT(real_in, imag_in, output_real, output_imag, n);
+	
+	test_results[0] = check(buffer_compare(output_real, real_out_expected, n), "test_real");
+	test_results[1] = check(buffer_compare(output_imag, imag_out_expected, n), "test_imag");
+	
+	
+	// Check that the inverse is equal to the original input
+	inverse_FFT(output_real, output_imag, inverse_real, inverse_imag, n);
+
+	test_results[2] = check(buffer_compare(real_in, inverse_real, n), "test_inverse_real");
+	test_results[3] = check(buffer_compare(imag_in, inverse_imag, n), "test_inverse_imag");
+	
+	// Cleanup
+	free(output_real);
+	free(output_imag);
+	free(inverse_real);
+	free(inverse_imag);
+	
+}
+
+void testFFTTask(void *params) {
 	double input_real[4] = {1, 1, 1, 1};
 	double input_imag[4] = {0, 0, 0, 0};
+	double output_real_expected[4] = {4, 0, 0, 0};
+	double output_imag_expected[4] = {0, 0, 0, 0};
 	
-	double output_real[4] = {0, 0, 0, 0};
-	double output_imag[4] = {0, 0, 0, 0};
+	bool test_results[4] = {0, 0, 0, 0};
 	
-	double inverse_real[4] = {0, 0, 0, 0};
-	double inverse_imag[4] = {0, 0, 0, 0};
+	fft_test(input_real, input_imag, output_real_expected, output_imag_expected, test_results, 4);
+	vTaskDelay(portMAX_DELAY);
+}
 	
 	volatile uint16_t bits;
 	volatile uint16_t result;
