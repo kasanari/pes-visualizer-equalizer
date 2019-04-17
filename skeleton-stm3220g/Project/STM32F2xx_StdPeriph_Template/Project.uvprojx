@@ -411,6 +411,16 @@
               <FileType>5</FileType>
               <FilePath>.\color.h</FilePath>
             </File>
+            <File>
+              <FileName>graph.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\graph.h</FilePath>
+            </File>
+            <File>
+              <FileName>graph.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\graph.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
