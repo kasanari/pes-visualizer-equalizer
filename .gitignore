@@ -64,3 +64,6 @@ dkms.conf
 *.htm
 *.Bak
 RTE_Components.h
+*.axf
+*.scvd
+*.iex
