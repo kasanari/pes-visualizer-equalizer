@@ -6,8 +6,11 @@
 #include "color.h"
 #include "LCD.h"
 
+
+typedef void (*drawGraphFunction)(uint16_t*);
+
 /*
-	PRE: _start_x < _end_x, _start_y < end_y, 0 < _num_freq < 64
+	PRE: _start_x < _end_x, _start_y < end_y, 0 < _num_freq < 32
 */
 void setup_graph(
 	uint16_t _start_x,
@@ -18,8 +21,14 @@ void setup_graph(
 	uint16_t _max_freq_value
 );
 
+void run_graph(drawGraphFunction f, uint16_t *freq_values);
+
 void draw_simple_white_graph(uint16_t *freq_values);
 
 void draw_simple_rainbow_graph(uint16_t *freq_values);
+
+void draw_block_rainbow_graph(uint16_t *freq_values);
+
+void draw_block_mirror_rainbow_graph(uint16_t *freq_values);
 
 #endif
