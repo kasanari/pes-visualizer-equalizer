@@ -1,12 +1,7 @@
 //#include "arm_math.h"
-#include "stm32f2xx_adc.h"
-#include "stm32_audio.h"
-#include "stm322xg_audio_recorder.h"
-#include "FreeRTOS.h"
-#include "semphr.h"
-#include "fft.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <math.h>
 #include <stdbool.h>
 
@@ -15,9 +10,7 @@
 #define PI 3.141592653589793238462643383279502884197169399
 
 //#define DEFAULT_VOLUME  70    /* Default volume in % (Mute=0%, Max = 100%) in Logarithmic values      */                                        
-																									
-xSemaphoreHandle buffer_switch_sem;
-
+																							
 uint16_t* audio_buffer_1;
 uint16_t* audio_buffer_2;
 
@@ -140,7 +133,7 @@ bool buffer_compare(double *buf1, double *buf2, int n) {
 	return true;
 }
 
-static bool check(u8 assertion, char *name) {
+static bool check(uint8_t assertion, char *name) {
   if (!assertion) {
     printf("Test %s failed\n", name);
 		return false;
@@ -148,6 +141,14 @@ static bool check(u8 assertion, char *name) {
 		printf("Test %s passed\n", name);
 		return true;
 	}
+}
+
+void print_buffer(double *buf, uint8_t n) {
+	printf("[ ");
+	for (int i = 0; i < n; i++) {
+		printf("%f ", buf[i]);
+	}
+	printf("]\n");
 }
 
 void fft_test(double *real_in, double *imag_in, double *real_out_expected, double *imag_out_expected, bool* test_results, int n) {
@@ -158,19 +159,25 @@ void fft_test(double *real_in, double *imag_in, double *real_out_expected, doubl
 	double *inverse_real = calloc(n, sizeof(double));
 	double *inverse_imag = calloc(n, sizeof(double));
 	
+	print_buffer(real_in, n);
+	print_buffer(imag_in, n);
+
 	// Check that the output is what we expect
 	FFT(real_in, imag_in, output_real, output_imag, n);
 	
 	test_results[0] = check(buffer_compare(output_real, real_out_expected, n), "test_real");
 	test_results[1] = check(buffer_compare(output_imag, imag_out_expected, n), "test_imag");
-	
+	print_buffer(output_real, n);
+	print_buffer(output_imag, n);
 	
 	// Check that the inverse is equal to the original input
 	inverse_FFT(output_real, output_imag, inverse_real, inverse_imag, n);
 
 	test_results[2] = check(buffer_compare(real_in, inverse_real, n), "test_inverse_real");
 	test_results[3] = check(buffer_compare(imag_in, inverse_imag, n), "test_inverse_imag");
-	
+	print_buffer(inverse_real, n);
+	print_buffer(inverse_imag, n);
+
 	// Cleanup
 	free(output_real);
 	free(output_imag);
@@ -179,43 +186,15 @@ void fft_test(double *real_in, double *imag_in, double *real_out_expected, doubl
 	
 }
 
-void testFFTTask(void *params) {
-	double input_real[4] = {1, 1, 1, 1};
-	double input_imag[4] = {0, 0, 0, 0};
-	double output_real_expected[4] = {4, 0, 0, 0};
-	double output_imag_expected[4] = {0, 0, 0, 0};
+int main(int argc, char const *argv[])
+{
+	double input_real[4] = {0, 0, 0, 0};
+	double input_imag[4] = {1, -1, 1, -1};
+	double output_real_expected[4] = {0, 0, 0, 0};
+	double output_imag_expected[4] = {1, -1, 1, -1};
 	
 	bool test_results[4] = {0, 0, 0, 0};
 	
 	fft_test(input_real, input_imag, output_real_expected, output_imag_expected, test_results, 4);
-	vTaskDelay(portMAX_DELAY);
-}
-	
-	volatile uint16_t bits;
-	volatile uint16_t result;
-	
-	bits = 0;
-	for (;;) {
-		
-		FFT(input_real, input_imag, output_real, output_imag, 4);
-		
-		inverse_FFT(output_real, output_imag, inverse_real, inverse_imag, 4);
-		
-		// Do FFT
-		/*if (buffer_select == 1) {
-			FFT(audio_buffer_1) 
-		}
-		else {
-			FFT(audio_buffer_2);
-		}*/
-
-		// Absoulute value of result maybe
-		vTaskDelay(10 / portTICK_RATE_MS);
-	}
-}
-
-void setupFFT(unsigned portBASE_TYPE uxPriority) {
-	STM32_AudioRec_Init(SAMPLE_RATE_44100, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
-	STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
-  xTaskCreate(transformTask, "fft", 100, NULL, uxPriority, NULL);
+	return 0;
 }
