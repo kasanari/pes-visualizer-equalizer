@@ -21,6 +21,8 @@ void setup_graph(
 	uint16_t _max_freq_value
 );
 
+void graph_clear_all(void);
+
 void run_graph(drawGraphFunction f, uint16_t *freq_values);
 
 void draw_simple_white_graph(uint16_t *freq_values);

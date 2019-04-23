@@ -29,7 +29,7 @@ void setup_graph(
 	uint8_t _num_freq, 
 	uint16_t _max_freq_value
 ) {
-	int i;
+	
 	start_x = _start_x; 
 	start_y = _start_y;
 	end_x = _end_x;  
@@ -44,6 +44,14 @@ void setup_graph(
 	first_time = 1;
 	
 	// Set last frequency array to zero
+	graph_clear_all();
+}
+
+
+void graph_clear_all() {
+	int i;
+	LCD_setColors(Black, Black);
+	LCD_fillRect(start_x, start_y, width, height);
 	for(i = 0; i < MAX_NUM_FREQ_VALUES; i++) {
 		last_freq_values[i] = 0;
 	}
