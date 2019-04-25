@@ -39,7 +39,7 @@ extern "C"
 #include "stm32f2xx.h"
 #include "stm322xg_eval.h"
 
-#include "audio_app_conf.h"
+//#include "audio_app_conf.h"
 
 /** @addtogroup Audio_Utilities
   * @{
@@ -71,8 +71,8 @@ extern "C"
 
 -----------------------------------------------------------------------------*/
 /* Set the preemption and subpriority values for the audio recorder timer interrupt */
-/* #define AUDIO_REC_TIM_PRE_PRIO            1 */
-/* #define AUDIO_REC_TIM_SUB_PRIO            0 */
+#define AUDIO_REC_TIM_PRE_PRIO            1 
+#define AUDIO_REC_TIM_SUB_PRIO            0 
 
 /* Uncomment this define to enable single data processing (just after aquiring from ADC) */
 //#define AUDIO_REC_USE_DATA_PROC_SINGLE
