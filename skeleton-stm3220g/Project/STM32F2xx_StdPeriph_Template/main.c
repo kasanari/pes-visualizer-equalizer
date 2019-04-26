@@ -32,6 +32,10 @@
 #include "TS.h"
 #include "stm322xg_eval_ioe.h"
 #include "fft.h"
+#include "color.h"
+#include "graph.h"
+
+/* Testing variables ------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
@@ -66,63 +70,50 @@ static void initDisplay () {
   lcdLock = xSemaphoreCreateMutex();
 
   LCD_init();
-  LCD_clear(White);
-  LCD_setTextColor(Blue);
-  LCD_displayStringLn(Line2, " Programming");
-  LCD_displayStringLn(Line3, " Embedded");
-  LCD_displayStringLn(Line4, " Systems");
+	LCD_SetFont(&Font16x24);
+  LCD_clear(Black);
+	LCD_setBackColor(Black);
+  LCD_setTextColor(Red);
 }
 
 
-static void lcdTask(void *params) {
-  unsigned short col1 = Blue, col2 = Red, col3 = Green;
-  unsigned short t;
-
-  for (;;) {
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setTextColor(col1);
-    LCD_displayChar(Line7, 40, '1');
-    LCD_setTextColor(col2);
-    LCD_displayChar(Line7, 60, '2');
-    LCD_setTextColor(col3);
-    LCD_displayChar(Line7, 80, '3');
-    xSemaphoreGive(lcdLock);
-	t = col1; col1 = col2; col2 = col3; col3 = t;
-    vTaskDelay(300 / portTICK_RATE_MS);
-  }
-}
-
+/*
+static void colorTask(void *params) { 
+	int xi, yi;
+	int step_size = 10;
+	// unsigned short green = 0;
+	hue = 0;
+	lightness = 0;
+	
+	for (;;) {
+		xSemaphoreTake(lcdLock, portMAX_DELAY);
+		for (xi = 0; xi < WIDTH; xi += step_size) {
+			hue = (360* xi)/WIDTH;
+			for (yi = 0; yi < HEIGHT; yi += step_size) {
+				lightness = (float)yi/HEIGHT;
+				color = getColorFromHSL_float(hue, 1.0, lightness);
+				// color = getColorFromHSL(hue, 100, (unsigned short) 100*lightness);
+				// color = GET_COLOR_16BIT(0, green, 0);
+				LCD_setColors(color,color);
+				LCD_fillRect( xi, yi, step_size, step_size);
+				LCD_setColors(Blue, White);	
+			}
+			// green = (63 * xi) / WIDTH;
+		}
+		xSemaphoreGive(lcdLock);
+	
+		hue = (hue > 360) ? 0 : hue;
+		vTaskDelay(100 / portTICK_RATE_MS);
+	}
+}*/
 
 /*-----------------------------------------------------------*/
 
-/**
- * Display stdout on the display
- */
-
 xQueueHandle printQueue;
 
-static void printTask(void *params) {
-  unsigned char str[21] = "                    ";
-  portTickType lastWakeTime = xTaskGetTickCount();
-  int i;
-
-  for (;;) {
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setTextColor(Black);
-    LCD_displayStringLn(Line9, str);
-    xSemaphoreGive(lcdLock);
-
-    for (i = 0; i < 19; ++i)
-	  str[i] = str[i+1];
-
-    if (!xQueueReceive(printQueue, str + 19, 0))
-	  str[19] = ' ';
-
-	vTaskDelayUntil(&lastWakeTime, 100 / portTICK_RATE_MS);
-  }
-}
 
 /* Retarget printing to the serial port 1 */
+
 int fputc(int ch, FILE *f) {
   unsigned char c = ch;
   xQueueSend(printQueue, &c, 0);
@@ -131,96 +122,64 @@ int fputc(int ch, FILE *f) {
 
 /*-----------------------------------------------------------*/
 
-/**
- * Blink the LEDs to show that we are alive
- */
-
-static void ledTask(void *params) {
-	Led_TypeDef leds[LEDn] = {LED1, LED2, LED3, LED4};
-  int cnt = 0;
-
-  for (;;) {
-    STM_EVAL_LEDToggle(leds[cnt]);
-    cnt = (cnt + 1) % sizeof(leds);
-    vTaskDelay(100 / portTICK_RATE_MS);
-  }
-}
 
 /*-----------------------------------------------------------*/
-void touchScreenTask(void *params) {
-  portTickType lastWakeTime = xTaskGetTickCount();
-  TS_STATE *ts_state;
-  u8 pressed = 0;
-  u8 i;
 
-  for (;;) {
-    ts_state = IOE_TS_GetState();
 
-	if (pressed) {
-	  if (!ts_state->TouchDetected)
-	    pressed = 0;
-	} else if (ts_state->TouchDetected) {
-	  for (i = 0; i < callbackNum; ++i) {
-		if (callbacks[i].left  <= ts_state->X &&
-		    callbacks[i].right >= ts_state->X &&
-		    callbacks[i].lower >= ts_state->Y &&
-		    callbacks[i].upper <= ts_state->Y)
-		  callbacks[i].callback(ts_state->X, ts_state->Y, ts_state->Z,
-		                        callbacks[i].data);
-	  }													
-	  pressed = 1;
-	}
 
-    if (ts_state->TouchDetected) {
-	  printf("%d,%d,%d ", ts_state->X, ts_state->Y, ts_state->Z);
-	}
 
-	vTaskDelayUntil(&lastWakeTime, 100 / portTICK_RATE_MS);
-  }
-}
 /*-----------------------------------------------------------*/
-
-xQueueHandle buttonQueue;
-
-static void highlightButton(u16 x, u16 y, u16 pressure, void *data) {
-  u16 d = (int)data;
-  xQueueSend(buttonQueue, &d, 0);
-}
-
-static void setupButtons(void) {
-  u16 i;
-  buttonQueue = xQueueCreate(4, sizeof(u16));
-  
-	LCD_putPixel(30, 40);
-  for (i = 0; i < 3; ++i) {
-    LCD_drawRect( 250, 30 + 60*i, 40, 40);
-		registerTSCallback(WIDTH - 30 - 40, WIDTH - 30, 
-		                    30 + 60*i + 40, 30 + 60*i,
-	                     &highlightButton, (void*)i);
-  }
-}
-
-static void highlightButtonsTask(void *params) {
-  u16 d;
-
-  for (;;) {
-    xQueueReceive(buttonQueue, &d, portMAX_DELAY);
-
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setColors(Blue,Red);
-    LCD_fillRect( 250,30 + 60*d, 40, 40);
-    LCD_setColors(Blue, White);	
-    xSemaphoreGive(lcdLock);
-
-	vTaskDelay(500 / portTICK_RATE_MS);
+/*
+static void testingGraphTask(void *params) {
+	int i = 0;
+	int function_index = 0;
+	drawGraphFunction f;
+	TS_STATE *ts_state;
+	int draw_change = 1;
+	u8 pressed = 0;
+	
+	for (;;) {
+		ts_state = IOE_TS_GetState();
 		
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-		LCD_setColors(Blue, White);	
-    LCD_fillRect( 250, 30 + 60*d, 40, 40);
-    
-    xSemaphoreGive(lcdLock);
-  }
-}
+		if (pressed) {
+			if (!ts_state->TouchDetected) {
+				pressed = 0;
+			}
+		} else if (ts_state->TouchDetected) {
+			pressed = 1;
+		}
+		
+		if (pressed) {
+			function_index = (function_index+1)%4;
+			draw_change = 1;
+		}
+		
+		switch (function_index) {
+			case(0):
+				f = draw_simple_white_graph;
+			break;
+			case(1):
+				f = draw_simple_rainbow_graph;
+			break;
+			case(2):
+				f = draw_block_rainbow_graph;
+			break;
+			case(3):
+				f = draw_block_mirror_rainbow_graph;
+			break;
+		}
+		
+		i = (i+1)%100;
+		xSemaphoreTake(lcdLock, portMAX_DELAY);
+		if (draw_change) {
+			graph_clear_all();
+			draw_change = 0;
+		}
+		run_graph(f, &sine[i]);
+		xSemaphoreGive(lcdLock);
+		vTaskDelay(30 / portTICK_RATE_MS);
+	}
+}*/
 
 /*-----------------------------------------------------------*/
 int main (void){
@@ -231,15 +190,20 @@ int main (void){
 	printQueue = xQueueCreate(128, 1);
 	
 	initDisplay();
-	setupButtons();
 	
-	setupFFT(1);
-	xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
-  xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
-  xTaskCreate(ledTask, "led", 100, NULL, 1, NULL);
-  xTaskCreate(touchScreenTask, "touchScreen", 100, NULL, 1, NULL);
-  xTaskCreate(highlightButtonsTask, "highlighter", 100, NULL, 1, NULL);
+
+	//setupFFT(1);
+	// setup_graph(10, 10, WIDTH-10, HEIGHT-10, 32, 256, sine);
+	setup_default_graph();
 	
+	// xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
+  // xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
+  // xTaskCreate(ledTask, "led", 100, NULL, 1, NULL);
+	// xTaskCreate(touchScreenTask, "touchScreen", 100, NULL, 1, NULL);
+	// xTaskCreate(menuTask, "menu", 100, NULL, 1, NULL);
+	// xTaskCreate(viewportTask, "viewport", 100, NULL, 1, NULL);
+  // xTaskCreate(highlightButtonsTask, "highlighter", 100, NULL, 1, NULL);
+	// xTaskCreate(testingGraphTask, "graph", 100, NULL, 1, NULL);
 	printf("Setup complete ");  // this is redirected to the display
 
 	
