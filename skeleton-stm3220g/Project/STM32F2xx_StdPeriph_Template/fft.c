@@ -57,6 +57,7 @@ void complex_mul(float a, float b, float c, float d, float *result_r, float *res
 
 float *sine_table = 0;
 float *cosine_table = 0;
+int *bit_rev_table = 0;
 
 void FFT_Init(int n) {
 	int levels = 0;
@@ -74,12 +75,26 @@ void FFT_Init(int n) {
 
 	sine_table = calloc(levels+1, sizeof(float));
 	cosine_table = calloc(levels+1, sizeof(float));
+	bit_rev_table = calloc(n, sizeof(int));
 
 	for (i = 0; i <= levels; i++) {
 		m = 1 << i;
 		cosine_table[i] = cos((2*PI)/m);
 		sine_table[i] =  -sin((2*PI)/m);
 	}
+	
+
+	for (i = 0; i <= levels; i++) {
+		m = 1 << i;
+		cosine_table[i] = cos((2*PI)/m);
+		sine_table[i] =  -sin((2*PI)/m);
+	}
+
+	for (i = 0; i<n; i++) {
+		bit_rev_table[i] = reverse_bits(i, levels);
+	}
+
+
 }
 
 int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
@@ -101,7 +116,7 @@ int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16
 	}
 	
 	for (i = 0; i < fft_length; i++) {
-		rev_index = reverse_bits(i, levels);
+		rev_index = bit_rev_table[i];
 		A_real[rev_index] = real_in[i];
 		A_imag[rev_index] = imag_in[i];
 	}
