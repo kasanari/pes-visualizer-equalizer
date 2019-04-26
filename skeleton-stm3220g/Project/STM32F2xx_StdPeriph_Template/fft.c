@@ -50,6 +50,7 @@ void complex_mul(float a, float b, float c, float d, float *result_r, float *res
 
 float *sine_table = 0;
 float *cosine_table = 0;
+int *bit_rev_table = 0;
 
 void FFT_Init(int n) {
 	int levels = 0;
@@ -67,11 +68,16 @@ void FFT_Init(int n) {
 
 	sine_table = calloc(levels+1, sizeof(float));
 	cosine_table = calloc(levels+1, sizeof(float));
+	bit_rev_table = calloc(n, sizeof(int));
 
 	for (i = 0; i <= levels; i++) {
 		m = 1 << i;
 		cosine_table[i] = cos((2*PI)/m);
 		sine_table[i] =  -sin((2*PI)/m);
+	}
+
+	for (i = 0; i<n; i++) {
+		bit_rev_table[i] = reverse_bits(i, levels);
 	}
 }
 
@@ -95,7 +101,7 @@ int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16
 	}
 	
 	for (i = 0; i < fft_length; i++) {
-		rev_index = reverse_bits(i, levels);
+		rev_index = bit_rev_table[i];
 		A_real[rev_index] = real_in[i];
 		A_imag[rev_index] = imag_in[i];
 	}
@@ -208,24 +214,30 @@ void fft_test(float *real_in, float *imag_in, float *real_out_expected, float *i
 	float *inverse_real = calloc(n, sizeof(float));
 	float *inverse_imag = calloc(n, sizeof(float));
 	
+	printf("Input:\n");
 	print_buffer(real_in, n);
 	print_buffer(imag_in, n);
 
 	// Check that the output is what we expect
 	FFT(real_in, imag_in, output_real, output_imag, n);
 	
-	test_results[0] = check(buffer_compare(output_real, real_out_expected, n), "test_real");
-	test_results[1] = check(buffer_compare(output_imag, imag_out_expected, n), "test_imag");
+
+	printf("Output:\n");
 	print_buffer(output_real, n);
 	print_buffer(output_imag, n);
+	test_results[0] = check(buffer_compare(output_real, real_out_expected, n), "test_real");
+	test_results[1] = check(buffer_compare(output_imag, imag_out_expected, n), "test_imag");
+
 	
 	// Check that the inverse is equal to the original input
 	inverse_FFT(output_real, output_imag, inverse_real, inverse_imag, n);
 
-	test_results[2] = check(buffer_compare(real_in, inverse_real, n), "test_inverse_real");
-	test_results[3] = check(buffer_compare(imag_in, inverse_imag, n), "test_inverse_imag");
+	printf("Inverse:\n");
 	print_buffer(inverse_real, n);
 	print_buffer(inverse_imag, n);
+	test_results[2] = check(buffer_compare(real_in, inverse_real, n), "test_inverse_real");
+	test_results[3] = check(buffer_compare(imag_in, inverse_imag, n), "test_inverse_imag");
+
 
 	// Cleanup
 	free(output_real);
