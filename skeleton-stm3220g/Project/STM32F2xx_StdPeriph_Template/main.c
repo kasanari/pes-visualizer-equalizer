@@ -31,31 +31,9 @@
 #include "LCD.h"
 #include "TS.h"
 #include "stm322xg_eval_ioe.h"
+#include "interface.h"
 
-/* Private variables ---------------------------------------------------------*/
-static __IO uint32_t TimingDelay;
-RCC_ClocksTypeDef RCC_Clocks;
 
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-void setupHW (void){
-	  /*!< At this stage the microcontroller clock setting is already configured, 
-       this is done through SystemInit() function which is called from startup
-       file (startup_stm32f2xx.s) before to branch to application main.
-       To reconfigure the default setting of SystemInit() function, refer to
-       system_stm32f2xx.c file
-     */     
-	
-	/*Initialize the LEDs*/
-	STM_EVAL_LEDInit(LED1);
-	STM_EVAL_LEDInit(LED2);
-	STM_EVAL_LEDInit(LED3);
-	STM_EVAL_LEDInit(LED4);
-	
-  /* SysTick end of count event each 1ms */
-	RCC_GetClocksFreq(&RCC_Clocks);
-  SysTick_Config(RCC_Clocks.HCLK_Frequency);
-}
 
 xSemaphoreHandle lcdLock;
 
@@ -63,13 +41,6 @@ xSemaphoreHandle lcdLock;
 static void initDisplay () {
   /* LCD Module init */
   lcdLock = xSemaphoreCreateMutex();
-
-  LCD_init();
-  LCD_clear(White);
-  LCD_setTextColor(Blue);
-  LCD_displayStringLn(Line2, " Programming");
-  LCD_displayStringLn(Line3, " Embedded");
-  LCD_displayStringLn(Line4, " Systems");
 }
 
 
@@ -130,22 +101,6 @@ int fputc(int ch, FILE *f) {
 
 /*-----------------------------------------------------------*/
 
-/**
- * Blink the LEDs to show that we are alive
- */
-
-static void ledTask(void *params) {
-	Led_TypeDef leds[LEDn] = {LED1, LED2, LED3, LED4};
-  int cnt = 0;
-
-  for (;;) {
-    STM_EVAL_LEDToggle(leds[cnt]);
-    cnt = (cnt + 1) % sizeof(leds);
-    vTaskDelay(100 / portTICK_RATE_MS);
-  }
-}
-
-/*-----------------------------------------------------------*/
 void touchScreenTask(void *params) {
   portTickType lastWakeTime = xTaskGetTickCount();
   TS_STATE *ts_state;
@@ -224,17 +179,17 @@ static void highlightButtonsTask(void *params) {
 /*-----------------------------------------------------------*/
 int main (void){
 	
-  setupHW();
+
 	IOE_Config(); /*Needed for the touch screen functionality*/
 	
 	printQueue = xQueueCreate(128, 1);
 	
 	initDisplay();
 	setupButtons();
-	
+	setupInterface();
 	xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
   xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
-  xTaskCreate(ledTask, "led", 100, NULL, 1, NULL);
+ 
   xTaskCreate(touchScreenTask, "touchScreen", 100, NULL, 1, NULL);
   xTaskCreate(highlightButtonsTask, "highlighter", 100, NULL, 1, NULL);
 	

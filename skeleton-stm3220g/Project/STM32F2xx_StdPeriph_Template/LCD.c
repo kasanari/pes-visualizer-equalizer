@@ -51,7 +51,7 @@ void LCD_putPixel(unsigned int x, unsigned int y){
 	PutPixel(y, WIDTH - x);
 }
 void LCD_drawLine(uint16_t x, uint16_t y, uint16_t length, uint16_t direction){
-	LCD_DrawLine(y, x, length, direction);
+	LCD_DrawLine(y, WIDTH - x, length, direction);
 }
 void LCD_drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height){
 	LCD_DrawRect(y, WIDTH - x, height, width);
