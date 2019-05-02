@@ -277,7 +277,6 @@ bool test_2() {
 	return check_test_result(test_results);
 }
 		
-// sin(x)
 bool test_3() {
 	FFT_Init(64);
 	float input_real[64] = {1.000000, 0.810002, 0.312205, -0.304228, -0.805056, -0.999965, -0.814890, -0.320160, 0.296230, 0.800054, 0.999859, 0.819721, 0.328092, -0.288211, -0.794995, -0.999684, -0.824495, -0.336001, 0.280172, 0.789881, 0.999438, 0.829211, 0.343887, -0.272113, -0.784711, -0.999121, -0.833868, -0.351748, 0.264035, 0.779486, 0.998735, 0.838467, 0.359585, -0.255939, -0.774206, -0.998278, -0.843007, -0.367396, 0.247824, 0.768872, 0.997751, 0.847488, 0.375181, -0.239692, -0.763484, -0.997154, -0.851909, -0.382941, 0.231544, 0.758042, 0.996487, 0.856270, 0.390673, -0.223379, -0.752547, -0.995749, -0.860571, -0.398377, 0.215198, 0.746999, 0.994942, 0.864811, 0.406054, -0.207002};
@@ -290,13 +289,30 @@ bool test_3() {
 	return check_test_result(test_results);
 }
 
-void testFFTTask(void *params) {	
-	test_1();
+void testFFTTask(void *params) {
+	volatile bool test1_result;
+	for (;;) {
+			test1_result = test_1();
+			vTaskDelay(30 / portTICK_RATE_MS);
+	}
+
 	vTaskDelay(portMAX_DELAY);
 }
 
-void setupFFT(unsigned portBASE_TYPE uxPriority) {
+void FFTTask(void *params) {
+	FFT_signals_t *signals = (FFT_signals_t*)params;
+	FFT_Init(signals->size);
+	for (;;) {
+			FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_input, signals->size);
+			complex_abs(signals->real_output, signals->imag_output, signals->magnitude, signals->size);
+			vTaskDelay(30 / portTICK_RATE_MS);
+	}
+
+	vTaskDelay(portMAX_DELAY);
+}
+
+void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals) {
 	STM32_AudioRec_Init(SAMPLE_RATE_44100, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
 	STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
-  xTaskCreate(testFFTTask, "fft", 1000, NULL, uxPriority, NULL);
+  	xTaskCreate(testFFTTask, "fft", 1000, &signals, uxPriority, NULL);
 }
