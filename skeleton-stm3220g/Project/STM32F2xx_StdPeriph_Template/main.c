@@ -32,7 +32,7 @@
 #include "TS.h"
 #include "stm322xg_eval_ioe.h"
 #include "interface.h"
-
+#include "touch.h"
 
 
 xSemaphoreHandle lcdLock;
@@ -129,7 +129,7 @@ void touchScreenTask(void *params) {
 	  printf("%d,%d,%d ", ts_state->X, ts_state->Y, ts_state->Z);
 	}
 
-	vTaskDelayUntil(&lastWakeTime, 100 / portTICK_RATE_MS);
+	vTaskDelayUntil(&lastWakeTime, 50 / portTICK_RATE_MS);
   }
 }
 /*-----------------------------------------------------------*/
@@ -147,6 +147,7 @@ static void setupButtons(void) {
   
 	LCD_putPixel(30, 40);
   for (i = 0; i < 3; ++i) {
+		LCD_SetColors(White,Black);
     LCD_drawRect( 250, 30 + 60*i, 40, 40);
 		registerTSCallback(WIDTH - 30 - 40, WIDTH - 30, 
 		                    30 + 60*i + 40, 30 + 60*i,
@@ -187,6 +188,7 @@ int main (void){
 	initDisplay();
 	setupButtons();
 	setupInterface();
+	setupTouch();
 	xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
   xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
  

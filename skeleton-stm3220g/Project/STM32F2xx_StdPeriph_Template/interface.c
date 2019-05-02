@@ -2,6 +2,7 @@
 #include "LCD.h"
 #include "semphr.h"
 #include <string.h>
+#include "touch.h"
 
 //LED - to check if system is alive
 xSemaphoreHandle lcd_temp;
@@ -31,6 +32,7 @@ void setupLCD(){
   LCD_setColors(White,Black);
 	LCD_SetFont(&Font16x24);
 	xSemaphoreGive(lcd_temp);
+	Currentfont = LCD_GetFont();
 }
 
 
@@ -39,7 +41,7 @@ PRE : row is line number , x is the column with origin at top right,
 			direction is either veritcal or horizontal
 */
 void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction){
-	Currentfont = LCD_GetFont();
+	
 	while(*ptr != '\0'){
 	  LCD_DisplayChar( LINE(row), x, (uint8_t)*ptr);
 		ptr++;
@@ -56,25 +58,28 @@ void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction){
 	 Or rectangles side(s) get removed.	
 	 		
 */
-void drawButton( uint16_t x, uint16_t y, char* ptr , Button_t button){
+void drawButton( uint16_t x, uint16_t y, char* ptr, uint8_t multiplier, Button_t button, void (*func_call)){
 	uint16_t W, H; 
 	W = Currentfont->Width;
-	H = Currentfont->Height;	
-	LCD_write( 0, WIDTH - x - 2, ptr, Vertical); // -2 to centre the symbol
-	LCD_drawRect( x, y, 1.5*W, H);
+	H = Currentfont->Height;
 	button.status = disable;
+	button.info = ptr;
+	button.x = x; button.y = y; button.width = multiplier*W; button.height = multiplier*H;
+	LCD_write( 0, WIDTH - x, ptr, Horizontal); 
+	LCD_drawRect( x, y, button.width, button.height);
+	registerTCallback( x, x + button.width, y + button.height, y, button, func_call);
 }
 
 
 // Draw Title
-void LCD_drawTitleBar(char* title){
-	Button_t Right, Left;
+void LCD_drawTitleBar(void){
+	Button_t Right, Left, Mode;
 	xSemaphoreTake( lcd_temp, portMAX_DELAY);
-	LCD_drawLine( 0, Line1 + 5, WIDTH,Horizontal);
-	drawButton( 1, 1, "<", Left);
-	drawButton( WIDTH - 80, 1, ">", Right);
-	LCD_drawLine( WIDTH - 50, 0, 30, Vertical);
-	LCD_write( 0, WIDTH - 40, "Visualizer", Horizontal); 
+	LCD_drawLine( 0, Line2, WIDTH,Horizontal); // +5 to get lagom
+	drawButton( 1, 1, "<", 2, Left, toggleBlue);
+	drawButton( WIDTH - 80, 1, ">", 2, Right, toggleOrange);
+	drawButton( WIDTH - 40, 1, "EQ", 2, Mode, toggleOrange);
+	LCD_write( 1, WIDTH - 40, "Visualizer", Horizontal); 
 	xSemaphoreGive(lcd_temp);	
 }
 
@@ -82,7 +87,7 @@ void LCD_drawTitleBar(char* title){
 void setupInterface(void){
 	setupHW();	
 	setupLCD();
-	LCD_write( 0, 40, "EQ", Horizontal);
-	LCD_drawTitleBar("Visualizer");
+	LCD_drawTitleBar();
 	xTaskCreate( ledTask, "led", 100, NULL, 1, NULL);
 }
+

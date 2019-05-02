@@ -9,8 +9,15 @@ enum status {
 	enable = 1
 };
 
+enum titlebar {
+	type = 0,
+	mode = 1
+ };
+
 struct button { 
-	int status ; 
+	int status ;
+	char* info;
+	uint16_t x,y,width,height;
 }; 
 
 typedef struct button Button_t; 
