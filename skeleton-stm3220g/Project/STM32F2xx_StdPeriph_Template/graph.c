@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "fft.h"
 
 #define MAX_NUM_FREQ_VALUES 32
 #define BAR_SPACING 3 
@@ -187,5 +188,17 @@ void setup_default_graph() {
 	} 
 	
 	setup_graph(0, 0, WIDTH, HEIGHT, 20, 256, sine);
+}
+
+void float_to_int(float*float_buf, uint16_t*int_buf, int n, int mask) {
+	for (int i = 0; i < n; i++) {
+		int_buf[i] = mask * float_buf[i];
+	}
+}
+
+void plot_fft_graph(FFT_signals_t *signals) {
+	uint16_t *frequencies_to_plot = calloc(signals->size, sizeof(uint16_t));
+	float_to_int(signals->magnitude, frequencies_to_plot, signals->size, 100);
+	setup_graph(0, 0, WIDTH, HEIGHT, signals->size, 256, signals->magnitude);
 }
 
