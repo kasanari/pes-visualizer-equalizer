@@ -5,7 +5,7 @@
 #include "LCD.h"
 typedef struct {
   uint16_t lower, upper, left, right;
-	Button_t button;
+	Button_t *button;
 	void (*func)(void);
 }TCallback;
 
@@ -14,7 +14,7 @@ void registerTCallback(
 	uint16_t right, 
 	uint16_t lower, 
 	uint16_t upper, 
-	Button_t button,
+	Button_t *button,
 	void (*func)(void)
 );
 

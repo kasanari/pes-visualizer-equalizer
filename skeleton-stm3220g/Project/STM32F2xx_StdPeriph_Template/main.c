@@ -29,7 +29,6 @@
 #include "main.h"
 #include "semphr.h"
 #include "LCD.h"
-#include "TS.h"
 #include "stm322xg_eval_ioe.h"
 #include "interface.h"
 #include "touch.h"
@@ -37,33 +36,6 @@
 
 xSemaphoreHandle lcdLock;
 
-
-static void initDisplay () {
-  /* LCD Module init */
-  lcdLock = xSemaphoreCreateMutex();
-}
-
-
-static void lcdTask(void *params) {
-  unsigned short col1 = Blue, col2 = Red, col3 = Green;
-  unsigned short t;
-
-  for (;;) {
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setTextColor(col1);
-    LCD_displayChar(Line7, 40, '1');
-    LCD_setTextColor(col2);
-    LCD_displayChar(Line7, 60, '2');
-    LCD_setTextColor(col3);
-    LCD_displayChar(Line7, 80, '3');
-    xSemaphoreGive(lcdLock);
-	t = col1; col1 = col2; col2 = col3; col3 = t;
-    vTaskDelay(300 / portTICK_RATE_MS);
-  }
-}
-
-
-/*-----------------------------------------------------------*/
 
 /**
  * Display stdout on the display
@@ -74,11 +46,13 @@ xQueueHandle printQueue;
 static void printTask(void *params) {
   unsigned char str[21] = "                    ";
   portTickType lastWakeTime = xTaskGetTickCount();
-  int i;
+	int i;
+	lcdLock = xSemaphoreCreateMutex();
+  
 
   for (;;) {
     xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setTextColor(Black);
+    LCD_setTextColor(White);
     LCD_displayStringLn(Line9, str);
     xSemaphoreGive(lcdLock);
 
@@ -101,83 +75,6 @@ int fputc(int ch, FILE *f) {
 
 /*-----------------------------------------------------------*/
 
-void touchScreenTask(void *params) {
-  portTickType lastWakeTime = xTaskGetTickCount();
-  TS_STATE *ts_state;
-  u8 pressed = 0;
-  u8 i;
-
-  for (;;) {
-    ts_state = IOE_TS_GetState();
-
-	if (pressed) {
-	  if (!ts_state->TouchDetected)
-	    pressed = 0;
-	} else if (ts_state->TouchDetected) {
-	  for (i = 0; i < callbackNum; ++i) {
-		if (callbacks[i].left  <= ts_state->X &&
-		    callbacks[i].right >= ts_state->X &&
-		    callbacks[i].lower >= ts_state->Y &&
-		    callbacks[i].upper <= ts_state->Y)
-		  callbacks[i].callback(ts_state->X, ts_state->Y, ts_state->Z,
-		                        callbacks[i].data);
-	  }													
-	  pressed = 1;
-	}
-
-    if (ts_state->TouchDetected) {
-	  printf("%d,%d,%d ", ts_state->X, ts_state->Y, ts_state->Z);
-	}
-
-	vTaskDelayUntil(&lastWakeTime, 50 / portTICK_RATE_MS);
-  }
-}
-/*-----------------------------------------------------------*/
-
-xQueueHandle buttonQueue;
-
-static void highlightButton(u16 x, u16 y, u16 pressure, void *data) {
-  u16 d = (int)data;
-  xQueueSend(buttonQueue, &d, 0);
-}
-
-static void setupButtons(void) {
-  u16 i;
-  buttonQueue = xQueueCreate(4, sizeof(u16));
-  
-	LCD_putPixel(30, 40);
-  for (i = 0; i < 3; ++i) {
-		LCD_SetColors(White,Black);
-    LCD_drawRect( 250, 30 + 60*i, 40, 40);
-		registerTSCallback(WIDTH - 30 - 40, WIDTH - 30, 
-		                    30 + 60*i + 40, 30 + 60*i,
-	                     &highlightButton, (void*)i);
-  }
-}
-
-static void highlightButtonsTask(void *params) {
-  u16 d;
-
-  for (;;) {
-    xQueueReceive(buttonQueue, &d, portMAX_DELAY);
-
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setColors(Blue,Red);
-    LCD_fillRect( 250,30 + 60*d, 40, 40);
-    LCD_setColors(Blue, White);	
-    xSemaphoreGive(lcdLock);
-
-	vTaskDelay(500 / portTICK_RATE_MS);
-		
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-		LCD_setColors(Blue, White);	
-    LCD_fillRect( 250, 30 + 60*d, 40, 40);
-    
-    xSemaphoreGive(lcdLock);
-  }
-}
-
-/*-----------------------------------------------------------*/
 int main (void){
 	
 
@@ -185,16 +82,9 @@ int main (void){
 	
 	printQueue = xQueueCreate(128, 1);
 	
-	initDisplay();
-	setupButtons();
 	setupInterface();
 	setupTouch();
-	xTaskCreate(lcdTask, "lcd", 100, NULL, 1, NULL);
   xTaskCreate(printTask, "print", 100, NULL, 1, NULL);
- 
-  xTaskCreate(touchScreenTask, "touchScreen", 100, NULL, 1, NULL);
-  xTaskCreate(highlightButtonsTask, "highlighter", 100, NULL, 1, NULL);
-	
 	printf("Setup complete ");  // this is redirected to the display
 
 	

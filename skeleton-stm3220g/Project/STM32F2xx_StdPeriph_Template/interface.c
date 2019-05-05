@@ -58,27 +58,31 @@ void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction){
 	 Or rectangles side(s) get removed.	
 	 		
 */
-void drawButton( uint16_t x, uint16_t y, char* ptr, uint8_t multiplier, Button_t button, void (*func_call)){
+void drawButton( uint16_t x, uint16_t y, char* ptr, uint8_t multiplier, Button_t *button, void (*func_call)){
 	uint16_t W, H; 
 	W = Currentfont->Width;
 	H = Currentfont->Height;
-	button.status = disable;
-	button.info = ptr;
-	button.x = x; button.y = y; button.width = multiplier*W; button.height = multiplier*H;
+	button->status = disable;
+	button->info = ptr;
+	button->x = x; 
+	button->y = y; 
+	button->width = multiplier*W; 
+	button->height = multiplier*H;
 	LCD_write( 0, WIDTH - x, ptr, Horizontal); 
-	LCD_drawRect( x, y, button.width, button.height);
-	registerTCallback( x, x + button.width, y + button.height, y, button, func_call);
+	LCD_drawRect( x, y, button->width, button->height);
+	registerTCallback( x, x + button->width, y + button->height, y, button, func_call);
 }
 
 
 // Draw Title
 void LCD_drawTitleBar(void){
-	Button_t Right, Left, Mode;
+	Button_t Right, Left, Mode; 
+	
 	xSemaphoreTake( lcd_temp, portMAX_DELAY);
 	LCD_drawLine( 0, Line2, WIDTH,Horizontal); // +5 to get lagom
-	drawButton( 1, 1, "<", 2, Left, toggleBlue);
-	drawButton( WIDTH - 80, 1, ">", 2, Right, toggleOrange);
-	drawButton( WIDTH - 40, 1, "EQ", 2, Mode, toggleOrange);
+	drawButton( 1, 1, "<", 2, &Left, toggleBlue);
+	drawButton( WIDTH - 80, 1, ">", 2, &Right, toggleOrange);
+	drawButton( WIDTH - 40, 1, "EQ", 2, &Mode, toggleOrange);
 	LCD_write( 1, WIDTH - 40, "Visualizer", Horizontal); 
 	xSemaphoreGive(lcd_temp);	
 }
