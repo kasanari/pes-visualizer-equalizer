@@ -97,7 +97,7 @@ void FFT_Init(int n) {
 
 }
 
-int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
+bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
 	uint8_t levels = 0;
 	uint8_t i, j, k;
 	float w_m_r, w_m_i, w_i, w_r, t_r, t_i, u_i, u_r;
@@ -112,7 +112,7 @@ int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16
 	}
 	
 	if ((1U << levels) != fft_length) { // Verify that fft_length is an exponential of 2
-		return 0;
+		return false;
 	}
 	
 	for (i = 0; i < fft_length; i++) {
@@ -154,7 +154,7 @@ int FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16
 		}
 	}
 	
-	return 1;
+	return true;
 }
 
 void complex_abs(float *real_in, float *imag_in, float *magnitude, uint16_t length) {
@@ -164,18 +164,18 @@ void complex_abs(float *real_in, float *imag_in, float *magnitude, uint16_t leng
 }
 
 
-int inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
-	int status;
+bool inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
+	bool status;
 	int i;
 	status = FFT(imag_in, real_in, imag_out, real_out, fft_length);
-	if (status == 0) {
-		return 0;
+	if (status == false) {
+		return false;
 	} else {
 		for (i = 0; i < fft_length; i++) {
 			real_out[i] /= fft_length;
 			imag_out[i] /= fft_length;
 		}
-		return 1;
+		return true;
 	}
 }
 
