@@ -73,9 +73,8 @@ void FFT_Init(int n) {
 		free(sine_table);
 	}
 
-	sine_table = calloc(levels+1, sizeof(float));
-	cosine_table = calloc(levels+1, sizeof(float));
-	bit_rev_table = calloc(n, sizeof(int));
+	sine_table = calloc(levels, sizeof(float));
+	cosine_table = calloc(levels, sizeof(float));
 
 	for (i = 0; i <= levels; i++) {
 		m = 1 << i;
@@ -83,9 +82,8 @@ void FFT_Init(int n) {
 		sine_table[i] =  -sin((2*PI)/m);
 	}
 	
-
-	for (i = 0; i <= levels; i++) {
-		m = 1 << i;
+	for (i = 0; i < levels; i++) {
+		m = 1 << (i+1);
 		cosine_table[i] = cos((2*PI)/m);
 		sine_table[i] =  -sin((2*PI)/m);
 	}
@@ -121,8 +119,8 @@ bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint1
 		A_imag[rev_index] = imag_in[i];
 	}
 	
-	for (i = 0; i <= levels; i++) {
-		m = 1 << i;
+	for (i = 0; i < levels; i++) {
+		m = 1 << (i+1);
 		
 		// w_m = cos((2*PI)/m) - i*sin((2*PI)/m)
 		w_m_r = cosine_table[i];
