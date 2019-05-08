@@ -66,12 +66,6 @@ void FFT_Init(int n) {
 		levels++;
 	}
 
-	if (cosine_table != 0) {
-		free(cosine_table);
-	}
-	if (sine_table != 0) {
-		free(sine_table);
-	}
 
 	sine_table = calloc(levels, sizeof(float));
 	cosine_table = calloc(levels, sizeof(float));
@@ -240,12 +234,6 @@ void fft_test(float *real_in, float *imag_in, float *real_out_expected, float *i
 
 	test_results[2] = check(buffer_compare(real_in, inverse_real, n), "test_inverse_real");
 	test_results[3] = check(buffer_compare(imag_in, inverse_imag, n), "test_inverse_imag");
-	
-	// Cleanup
-	free(output_real);
-	free(output_imag);
-	free(inverse_real);
-	free(inverse_imag);
 	
 }
 
