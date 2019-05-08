@@ -289,12 +289,13 @@ bool test_3() {
 	return check_test_result(test_results);
 }
 
-void testFFTTask(void *params) {
+static void testFFTTask(void *params) {
 	volatile bool test1_result;
-	for (;;) {
+	volatile bool test2_result;
+	volatile bool test3_result;
 			test1_result = test_1();
-			vTaskDelay(30 / portTICK_RATE_MS);
-	}
+	test2_result = test_2();
+	test3_result = test_3();
 
 	vTaskDelay(portMAX_DELAY);
 }
