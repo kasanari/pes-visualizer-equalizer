@@ -59,21 +59,23 @@ float *sine_table = 0;
 float *cosine_table = 0;
 int *bit_rev_table = 0;
 
-void FFT_Init(int n) {
+bool FFT_Init(int n) {
 	int levels = 0;
 	int i, m;
 	for (i = n; i > 1; i >>= 1) {
 		levels++;
 	}
 
+	if ((1U << levels) != n) { // Verify that fft_length is an exponential of 2
+		return false;
+	}
 
 	sine_table = calloc(levels, sizeof(float));
 	cosine_table = calloc(levels, sizeof(float));
+	bit_rev_table = calloc(n, sizeof(uint8_t));
 
-	for (i = 0; i <= levels; i++) {
-		m = 1 << i;
-		cosine_table[i] = cos((2*PI)/m);
-		sine_table[i] =  -sin((2*PI)/m);
+	if ((sine_table == NULL) || (cosine_table == NULL) || (bit_rev_table == NULL)) {
+		return false; // Could not allocate enough memory
 	}
 	
 	for (i = 0; i < levels; i++) {
@@ -86,6 +88,7 @@ void FFT_Init(int n) {
 		bit_rev_table[i] = reverse_bits(i, levels);
 	}
 
+	return true;
 
 }
 
