@@ -313,7 +313,11 @@ void FFTTask(void *params) {
 }
 
 void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals) {
-	STM32_AudioRec_Init(SAMPLE_RATE_44100, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
-	STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
-  	xTaskCreate(testFFTTask, "fft", 1000, &signals, uxPriority, NULL);
+	BaseType_t xReturned;
+	xReturned = xTaskCreate(testFFTTask, "fft", 1000, signals, uxPriority, NULL);
+	if( xReturned == pdPASS ) {
+		printf("FFT task created!");
+	} else {
+		printf("FFT task could not be created!");
+	}
 }
