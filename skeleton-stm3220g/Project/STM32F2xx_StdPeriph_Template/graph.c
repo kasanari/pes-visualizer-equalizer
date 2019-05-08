@@ -17,114 +17,112 @@
 		
 */
 uint16_t sine[200];
-uint16_t start_x, start_y, end_x, end_y, width, height, max_freq_value, step_width, mid_y;
-uint8_t num_freq;
 uint16_t last_freq_values[MAX_NUM_FREQ_VALUES];
 uint8_t first_time;
 
 
-void graph_clear_all() {
+void graph_clear_all(graph_t *graph) {
 	int i;
 	LCD_setColors(Black, Black);
-	LCD_fillRect(start_x, start_y, width, height);
+	LCD_fillRect(graph->start_x, graph->start_y, graph->width, graph->height);
 	for(i = 0; i < MAX_NUM_FREQ_VALUES; i++) {
 		last_freq_values[i] = 0;
 	}
 }
 
-void run_graph(drawGraphFunction f, uint16_t *freq_values) {
+void run_graph(drawGraphFunction f, graph_t *graph) {
 	int i;
 	if (!first_time) {
-		f(freq_values);
-		for (i = 0; i < num_freq; i++) {
-			last_freq_values[i] = freq_values[i];
+		f(graph->freqs, graph);
+		for (i = 0; i < graph->num_freq; i++) {
+			last_freq_values[i] = graph->freqs[i];
 		}
 	} else {
 		first_time = 0;
 	}
 }
 
-void draw_simple_white_graph(uint16_t *freq_values) {
+void draw_simple_white_graph(uint16_t *freq_values, graph_t *graph) {
 	uint16_t i;
 	int16_t bar_diff, last_bar, bar;
-	for (i = 0; i < num_freq; i++) {
-		last_bar 	= (height*last_freq_values[i])/	max_freq_value;
-		bar 			= (height*freq_values[i])			/	max_freq_value;
+	for (i = 0; i < graph->num_freq; i++) {
+		last_bar 	= (graph->height*last_freq_values[i])/	graph->max_freq_value;
+		bar 			= (graph->height*freq_values[i])			/	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
 			LCD_setColors(White, White);		
-			LCD_fillRect(start_x + i*step_width, end_y - bar, step_width-BAR_SPACING, bar_diff);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - bar, graph->step_width-BAR_SPACING, bar_diff);
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
-			LCD_fillRect(start_x + i*step_width, end_y - last_bar, step_width-BAR_SPACING, -bar_diff);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - last_bar, graph->step_width-BAR_SPACING, -bar_diff);
 		}
 	}
 }
 
-void draw_simple_rainbow_graph(uint16_t *freq_values) {
+void draw_simple_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
-	for (i = 0; i < num_freq; i++) {
-		last_bar 	= (height*last_freq_values[i])/	max_freq_value;
-		bar 			= (height*freq_values[i])			/	max_freq_value;
+	for (i = 0; i < graph->num_freq; i++) {
+		last_bar 	= (graph->height*last_freq_values[i]) /	graph->max_freq_value;
+		bar 			= (graph->height*freq_values[i])			 /	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar)/max_freq_value, 100, 50);
+			color = getColorFromHSL((360*bar)/graph->max_freq_value, 100, 50);
 			LCD_setColors(color, color);
-			LCD_fillRect(start_x + i*step_width, end_y - bar, step_width-BAR_SPACING, bar_diff);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - bar, graph->step_width-BAR_SPACING, bar_diff);
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
-			LCD_fillRect(start_x + i*step_width, end_y - last_bar, step_width-BAR_SPACING, -bar_diff);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - last_bar, graph->step_width-BAR_SPACING, -bar_diff);
 		}
 	}
 }
 
-void draw_block_rainbow_graph(uint16_t *freq_values) {
+void draw_block_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
 	uint8_t block_height = 10;
 	uint8_t block_diff = block_height - 3;
-	for (i = 0; i < num_freq; i++) {
-		last_bar 	= (height*last_freq_values[i])/	(block_height * max_freq_value);
-		bar 			= (height*freq_values[i])			/	(block_height * max_freq_value);
+	for (i = 0; i < graph->num_freq; i++) {
+		last_bar 	= (graph->height*last_freq_values[i]) /	graph->max_freq_value;
+		bar 			= (graph->height*freq_values[i])			 /	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar*block_height)/max_freq_value, 100, 50);
+			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, 50);
 			LCD_setColors(color, color);
-			LCD_fillRect(start_x + i*step_width, end_y - bar*block_height, step_width-BAR_SPACING, bar_diff*block_diff);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - bar*block_height, graph->step_width-BAR_SPACING, bar_diff*block_diff);
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
-			LCD_fillRect(start_x + i*step_width, end_y - last_bar*block_height, step_width-BAR_SPACING, -bar_diff*(block_height));
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - last_bar*block_height, graph->step_width-BAR_SPACING, -bar_diff*(block_height));
 		}
 	}
 }
 
-void draw_block_mirror_rainbow_graph(uint16_t *freq_values) {
+void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar, mirror_lightness;
 	uint8_t block_height = 30;
 	uint8_t block_diff = block_height - 10;
 	
-	for (i = 0; i < num_freq; i++) {
-		last_bar 	= (height*last_freq_values[i])/	(block_height * max_freq_value);
-		bar 			= (height*freq_values[i])			/	(block_height * max_freq_value);
+	for (i = 0; i < graph->num_freq; i++) {
+		last_bar 	= (graph->height*last_freq_values[i])/	(block_height * graph->max_freq_value);
+		bar 			= (graph->height*freq_values[i])			/	(block_height * graph->max_freq_value);
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar*block_height)/max_freq_value, 100, 50);
+			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, 50);
 			LCD_setColors(color, color);
-			LCD_fillRect(start_x + i*step_width, mid_y - bar*block_height/2, step_width-BAR_SPACING, bar_diff*block_diff/2);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - bar*block_height/2, graph->step_width-BAR_SPACING, bar_diff*block_diff/2);
 			mirror_lightness = 40-6*bar;
 			mirror_lightness = mirror_lightness > 0 ? mirror_lightness : 0;
-			color = getColorFromHSL((360*bar*block_height)/max_freq_value, 100, mirror_lightness);
+			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, mirror_lightness);
 			LCD_setColors(color, color);
-			LCD_fillRect(start_x + i*step_width, mid_y + (bar-1)*block_height/2, step_width-BAR_SPACING, bar_diff*block_diff/2);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y + (bar-1)*block_height/2, graph->step_width-BAR_SPACING, bar_diff*block_diff/2);
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
-			LCD_fillRect(start_x + i*step_width, mid_y - last_bar*block_height/2, step_width-BAR_SPACING, -bar_diff*block_diff/2);
-			LCD_fillRect(start_x + i*step_width, mid_y + (last_bar-1)*block_height/2, step_width-BAR_SPACING, -bar_diff*block_diff/2);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - last_bar*block_height/2, graph->step_width-BAR_SPACING, -bar_diff*block_diff/2);
+			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y + (last_bar-1)*block_height/2, graph->step_width-BAR_SPACING, -bar_diff*block_diff/2);
 		}
 	}
 }
@@ -132,16 +130,16 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values) {
 static void runGraphTask(void *params) {
 	uint8_t counter; /* only for now to have a moving sine */
 	const uint8_t max_count = 100; /* only for now */
-	uint16_t *freqs = (uint16_t *) params;
+	graph_t *graph = (graph_t *) params;
 	for (;;) {
-		run_graph(draw_simple_rainbow_graph, &freqs[counter]);
+		run_graph(draw_simple_rainbow_graph, graph);
 		counter = (counter+1)%max_count;
 		vTaskDelay(30 / portTICK_RATE_MS);
 	}
 }
 
 
-void setup_graph(
+graph_t *setup_graph(
 	uint16_t _start_x, 
 	uint16_t _start_y, 
 	uint16_t _end_x, 
@@ -151,22 +149,26 @@ void setup_graph(
 	uint16_t *_freq_array
 ) {
 	
-	start_x = _start_x; 
-	start_y = _start_y;
-	end_x = _end_x;  
-	end_y = _end_y;  
-	num_freq = _num_freq;
-	max_freq_value = _max_freq_value;
+	graph_t *graph = calloc(1, sizeof(graph_t));
 	
-	width = end_x - start_x;
-	height = end_y - start_y;	
-	step_width = width/num_freq;
-	mid_y = start_y + height/2;
+	graph->start_x = _start_x; 
+	graph->start_y = _start_y;
+	graph->end_x = _end_x;  
+	graph->end_y = _end_y;  
+	graph->num_freq = _num_freq;
+	graph->max_freq_value = _max_freq_value;
+	
+	graph->width = _end_x - _start_x;
+	graph->height = _end_y - _start_y;	
+	graph->step_width = graph->width/_num_freq;
+	graph->mid_y = _start_y + graph->height/2;
+	graph->freqs = _freq_array;
 	first_time = 1;
 	
 	// Set last frequency array to zero
-	graph_clear_all();
-	xTaskCreate(runGraphTask, "graph", 100, _freq_array, 1, NULL);
+	graph_clear_all(graph);
+	//xTaskCreate(runGraphTask, "graph", 100, graph, 1, NULL);
+	return graph;
 }
 
 
