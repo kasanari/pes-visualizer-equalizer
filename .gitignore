@@ -67,3 +67,4 @@ RTE_Components.h
 *.axf
 *.scvd
 *.iex
+*.i
