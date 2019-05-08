@@ -289,14 +289,25 @@ static void testFFTTask(void *params) {
 	vTaskDelay(portMAX_DELAY);
 }
 
-void FFTTask(void *params) {
-	FFT_signals_t *signals = (FFT_signals_t*)params;
-	FFT_Init(signals->size);
+static void FFTTask(void *params) {
+		volatile FFT_signals_t *signals = (FFT_signals_t*)params;
+		bool status;
+
+		if (FFT_Init(signals->size)) {
 	for (;;) {
-			FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_input, signals->size);
+				status = FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_input, signals->size);
+				if (status == false) {
+					printf("FFT failed");
+				} else {
+					xSemaphoreTake(signals->graph_done_lock, portMAX_DELAY);
 			complex_abs(signals->real_output, signals->imag_output, signals->magnitude, signals->size);
+					xSemaphoreGive(signals->fft_done_lock);
+				}
 			vTaskDelay(30 / portTICK_RATE_MS);
 	}
+		} else {
+			printf("FFT initialization failed");
+		}
 
 	vTaskDelay(portMAX_DELAY);
 }
