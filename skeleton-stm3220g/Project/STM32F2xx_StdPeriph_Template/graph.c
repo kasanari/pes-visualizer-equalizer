@@ -198,6 +198,25 @@ void float_to_int(float*float_buf, uint16_t*int_buf, int n, int mask) {
 	}
 }
 
+uint16_t max(uint16_t *buf, size_t n) {
+		uint16_t max = 0;
+		for (int i = 0; i < n; i++) {
+			if (buf[i] > max) {
+				max = buf[i];
+			}
+		}
+		return max;
+}
+
+uint16_t min(uint16_t *buf, size_t n) {
+		uint16_t min = 0;
+		for (int i = 0; i < n; i++) {
+			if (buf[i] < min) {
+				min = buf[i];
+			}
+		}
+		return min;
+}
 void plot_fft_graph(FFT_signals_t *signals) {
 	uint16_t *frequencies_to_plot = calloc(signals->size, sizeof(uint16_t));
 	float_to_int(signals->magnitude, frequencies_to_plot, signals->size, 100);
