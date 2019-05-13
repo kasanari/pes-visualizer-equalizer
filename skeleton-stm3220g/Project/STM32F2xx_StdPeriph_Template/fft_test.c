@@ -12,8 +12,14 @@ static float inverse_imag[FFT_LENGTH];
 static float out_i[FFT_LENGTH];
 static float out_r[FFT_LENGTH];
 static float mag[FFT_LENGTH];
+static FFT_signals_t test_signals;
 
 void test_reset() {
+	test_signals.real_input = NULL;
+	test_signals.imag_input = NULL;
+	test_signals.real_output = NULL;
+	test_signals.imag_output = NULL;
+	test_signals.magnitude = NULL;
 	for (int i = 0; i < FFT_LENGTH; i++) {
 		out_i[i] = 0;
 		out_r[i] = 0;
@@ -92,22 +98,16 @@ bool test_1() {
 		float expected_output_imag[4] = {0, 0, 0, 0};
 		float expected_magnitude[4] = {1, 1, 1, 1};
 		bool test_results[5] = {0, 0, 0, 0, 0};
-		
-		FFT_signals_t *test_signals = calloc(1, sizeof(FFT_signals_t));
-		
-		if (!test_signals) {
-			return false; // Could not allocate enough memory
-		}
 
 		if (FFT_Init(4)) {
 
-		test_signals->real_input = input_real;
-		test_signals->imag_input = input_imag;
-		test_signals->real_output = out_r;
-		test_signals->imag_output = out_i;
-		test_signals->magnitude = mag;
+		test_signals.real_input = input_real;
+		test_signals.imag_input = input_imag;
+		test_signals.real_output = out_r;
+		test_signals.imag_output = out_i;
+		test_signals.magnitude = mag;
 		
-		fft_test(test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, 4);
+		fft_test(&test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, 4);
 		test_reset();
 		return check_test_result(test_results);
 	} else {
@@ -123,22 +123,16 @@ bool test_2() {
 	float expected_output_imag[FFT_LENGTH] = {0.000000, -31.696241, 0.681785, 0.379400, 0.267760, 0.207480, 0.169102, 0.142251, 0.122263, 0.106710, 0.094192, 0.083848, 0.075112, 0.067599, 0.061039, 0.055232, 0.050033, 0.045327, 0.041027, 0.037065, 0.033385, 0.029940, 0.026695, 0.023618, 0.020681, 0.017863, 0.015143, 0.012503, 0.009928, 0.007404, 0.004916, 0.002452, 0.000000, -0.002452, -0.004916, -0.007404, -0.009928, -0.012503, -0.015143, -0.017863, -0.020681, -0.023618, -0.026695, -0.029940, -0.033385, -0.037065, -0.041027, -0.045327, -0.050033, -0.055232, -0.061039, -0.067599, -0.075112, -0.083848, -0.094192, -0.106710, -0.122263, -0.142251, -0.169102, -0.207480, -0.267760, -0.379400, -0.681785, 31.696241};
 	float expected_magnitude[64] = {0.000000, 31.734467, 0.685084, 0.383551, 0.273006, 0.213890, 0.176711, 0.151083, 0.132337, 0.118043, 0.106804, 0.097755, 0.090336, 0.084162, 0.078962, 0.074543, 0.070757, 0.067495, 0.064672, 0.062221, 0.060091, 0.058238, 0.056630, 0.055239, 0.054043, 0.053023, 0.052166, 0.051458, 0.050891, 0.050457, 0.050151, 0.049968, 0.049908, 0.049968, 0.050151, 0.050457, 0.050891, 0.051458, 0.052166, 0.053023, 0.054043, 0.055239, 0.056630, 0.058238, 0.060091, 0.062221, 0.064672, 0.067495, 0.070757, 0.074543, 0.078962, 0.084162, 0.090336, 0.097755, 0.106804, 0.118043, 0.132337, 0.151083, 0.176711, 0.213890, 0.273006, 0.383551, 0.685084, 31.734467};
 	bool test_results[5] = {0, 0, 0, 0, 0};
-	FFT_signals_t *test_signals;
-	
-	test_signals = calloc(1, sizeof(FFT_signals_t));
-		
-	if (!test_signals) {
-			return false; // Could not allocate enough memory
-	}
 	
 	if(FFT_Init(FFT_LENGTH)) {			
-		test_signals->real_input = input_real;
-		test_signals->imag_input = input_imag;
-		test_signals->real_output = out_r;
-		test_signals->imag_output = out_i;
-		test_signals->magnitude = mag;		
+		
+		test_signals.real_input = input_real;
+		test_signals.imag_input = input_imag;
+		test_signals.real_output = out_r;
+		test_signals.imag_output = out_i;
+		test_signals.magnitude = mag;		
 
-		fft_test(test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, FFT_LENGTH);
+		fft_test(&test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, FFT_LENGTH);
 		test_reset();
 		return check_test_result(test_results);
 	} else {
@@ -154,22 +148,16 @@ bool test_3() {
 		float expected_output_imag[FFT_LENGTH] = {2.351868, 2.882607, 3.648845, 4.859505, 7.074188, 12.471064, 45.981498, -29.071291, -11.281463, -7.075883, -5.187772, -4.111291, -3.412919, -2.921189, -2.554667, -2.269716, -2.040839, -1.852141, -1.693191, -1.556860, -1.438106, -1.333263, -1.239595, -1.155019, -1.077918, -1.007017, -0.941292, -0.879911, -0.822189, -0.767552, -0.715515, -0.665662, -0.617633, -0.571109, -0.525805, -0.481464, -0.437847, -0.394730, -0.351901, -0.309151, -0.266273, -0.223059, -0.179292, -0.134748, -0.089182, -0.042332, 0.006094, 0.056424, 0.109030, 0.164344, 0.222868, 0.285199, 0.352055, 0.424308, 0.503034, 0.589579, 0.685657, 0.793483, 0.915982, 1.057095, 1.222274, 1.419289, 1.659605, 1.960888};
 		float expected_magnitude[FFT_LENGTH] = {3.027429, 3.572826, 4.370754, 5.645084, 7.995502, 13.756285, 49.645905, 30.809733, 11.767612, 7.283532, 5.283115, 4.152608, 3.427444, 2.923892, 2.554714, 2.273174, 2.051981, 1.874132, 1.728484, 1.607436, 1.505622, 1.419153, 1.345140, 1.281399, 1.226246, 1.178367, 1.136721, 1.100480, 1.068973, 1.041660, 1.018100, 0.997932, 0.980866, 0.966662, 0.955133, 0.946127, 0.939533, 0.935267, 0.933277, 0.933541, 0.936060, 0.940866, 0.948016, 0.957601, 0.969742, 0.984597, 1.002367, 1.023300, 1.047705, 1.075957, 1.108519, 1.145961, 1.188985, 1.238466, 1.295500, 1.361479, 1.438190, 1.527963, 1.633887, 1.760147, 1.912549, 2.099381, 2.332895, 2.631993};
 		bool test_results[5] = {0, 0, 0, 0, 0};
-
-		FFT_signals_t *test_signals = calloc(1, sizeof(FFT_signals_t));
-	
-		if (!test_signals) {
-			return false; // Could not allocate enough memory
-		}
 	
 		if (FFT_Init(FFT_LENGTH)) {
 
-		test_signals->real_input = input_real;
-		test_signals->imag_input = input_imag;
-		test_signals->real_output = out_r;
-		test_signals->imag_output = out_i;
-		test_signals->magnitude = mag;
+		test_signals.real_input = input_real;
+		test_signals.imag_input = input_imag;
+		test_signals.real_output = out_r;
+		test_signals.imag_output = out_i;
+		test_signals.magnitude = mag;
 		
-		fft_test(test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, FFT_LENGTH);
+		fft_test(&test_signals, expected_output_real, expected_output_imag, expected_magnitude, test_results, FFT_LENGTH);
 		test_reset();
 		return check_test_result(test_results);
 	} else {
