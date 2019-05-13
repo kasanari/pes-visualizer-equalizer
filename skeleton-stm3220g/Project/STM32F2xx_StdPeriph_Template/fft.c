@@ -15,9 +15,9 @@
 
 //#define DEFAULT_VOLUME  70    /* Default volume in % (Mute=0%, Max = 100%) in Logarithmic values      */                                        
 																									
-static float inverse_real[FFT_LENGTH];
-static float inverse_imag[FFT_LENGTH];
 static uint8_t bit_rev_table[FFT_LENGTH];
+static float sine_table[FFT_LENGTH/2];
+static float cosine_table[FFT_LENGTH/2];
 xSemaphoreHandle buffer_switch_sem;
 
 uint16_t* audio_buffer_1;
@@ -57,9 +57,6 @@ void complex_mul(float a, float b, float c, float d, float *result_r, float *res
 	*result_i = a*d + b*c;
 }
 
-float *sine_table = 0;
-float *cosine_table = 0;
-
 bool FFT_Init(int n) {
 	int levels = 0;
 	int i, m;
@@ -71,13 +68,6 @@ bool FFT_Init(int n) {
 		return false;
 	}
 
-	sine_table = calloc(levels, sizeof(float));
-	cosine_table = calloc(levels, sizeof(float));
-
-	if ((sine_table == NULL) || (cosine_table == NULL)) {
-		return false; // Could not allocate enough memory
-	}
-	
 	for (i = 0; i < levels; i++) {
 		m = 1 << (i+1);
 		cosine_table[i] = cos((2*PI)/m);
