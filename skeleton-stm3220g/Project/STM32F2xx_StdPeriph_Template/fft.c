@@ -67,7 +67,7 @@ bool FFT_Init(int n) {
 	if ((1U << levels) != n) { // Verify that fft_length is an exponential of 2
 		return false;
 	}
-
+	
 	for (i = 0; i < levels; i++) {
 		m = 1 << (i+1);
 		cosine_table[i] = cos((2*PI)/m);
@@ -167,15 +167,14 @@ bool inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_ou
 static void FFTTask(void *params) {
 		volatile FFT_signals_t *signals = (FFT_signals_t*)params;
 		bool status;
-
-		if (FFT_Init(signals->size)) {
+		if (FFT_Init(FFT_LENGTH)) {
 	for (;;) {
-				status = FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_input, signals->size);
+				status = FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_output, FFT_LENGTH);
 				if (status == false) {
 					printf("FFT failed");
 				} else {
 					xSemaphoreTake(signals->graph_done_lock, portMAX_DELAY);
-			complex_abs(signals->real_output, signals->imag_output, signals->magnitude, signals->size);
+					complex_abs(signals->real_output, signals->imag_output, signals->magnitude, FFT_LENGTH);
 					xSemaphoreGive(signals->fft_done_lock);
 				}
 			vTaskDelay(30 / portTICK_RATE_MS);
@@ -188,8 +187,10 @@ static void FFTTask(void *params) {
 }
 
 void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals) {
+	//STM32_AudioRec_Init(SAMPLE_RATE_44100, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
+	//STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
 	BaseType_t xReturned;
-	xReturned = xTaskCreate(testFFTTask, "fft", 1000, signals, uxPriority, NULL);
+	xReturned = xTaskCreate(FFTTask, "fft", 1000, signals, uxPriority, NULL);
 	if( xReturned == pdPASS ) {
 		printf("FFT task created!");
 	} else {
