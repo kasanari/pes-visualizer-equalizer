@@ -15,8 +15,9 @@
 
 //#define DEFAULT_VOLUME  70    /* Default volume in % (Mute=0%, Max = 100%) in Logarithmic values      */                                        
 																									
-float inverse_real[FFT_LENGTH];
-float inverse_imag[FFT_LENGTH];
+static float inverse_real[FFT_LENGTH];
+static float inverse_imag[FFT_LENGTH];
+static uint8_t bit_rev_table[FFT_LENGTH];
 xSemaphoreHandle buffer_switch_sem;
 
 uint16_t* audio_buffer_1;
@@ -58,7 +59,6 @@ void complex_mul(float a, float b, float c, float d, float *result_r, float *res
 
 float *sine_table = 0;
 float *cosine_table = 0;
-int *bit_rev_table = 0;
 
 bool FFT_Init(int n) {
 	int levels = 0;
@@ -73,9 +73,8 @@ bool FFT_Init(int n) {
 
 	sine_table = calloc(levels, sizeof(float));
 	cosine_table = calloc(levels, sizeof(float));
-	bit_rev_table = calloc(n, sizeof(uint8_t));
 
-	if ((sine_table == NULL) || (cosine_table == NULL) || (bit_rev_table == NULL)) {
+	if ((sine_table == NULL) || (cosine_table == NULL)) {
 		return false; // Could not allocate enough memory
 	}
 	
