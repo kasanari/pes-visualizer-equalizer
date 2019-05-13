@@ -17,6 +17,8 @@ typedef struct FFT_signals {
 } FFT_signals_t;
 
 
+bool FFT_Init(int n);
+
 bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length);
 
 void complex_abs(float *real_in, float *imag_in, float *magnitude, uint16_t length);
