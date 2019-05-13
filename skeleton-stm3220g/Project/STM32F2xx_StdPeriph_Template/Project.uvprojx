@@ -134,7 +134,7 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4100</DriverSelection>
+            <DriverSelection>4101</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
@@ -173,7 +173,7 @@
             <AdsLven>1</AdsLven>
             <AdsLsxf>1</AdsLsxf>
             <RvctClst>0</RvctClst>
-            <GenPPlst>0</GenPPlst>
+            <GenPPlst>1</GenPPlst>
             <AdsCpuType>"Cortex-M3"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
             <mOS>0</mOS>
@@ -312,7 +312,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -402,6 +402,21 @@
               <FileType>1</FileType>
               <FilePath>..\..\Utilities\STM32_Audio\STM322xG_EVAL\stm322xg_audio_recorder.c</FilePath>
             </File>
+            <File>
+              <FileName>graph.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\graph.c</FilePath>
+            </File>
+            <File>
+              <FileName>color.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\color.c</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOSConfig.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\FreeRTOS\FreeRTOSConfig.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -411,6 +426,16 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>global.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\global.h</FilePath>
+            </File>
+            <File>
+              <FileName>fft_test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\fft_test.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -493,11 +518,6 @@
           <GroupName>FreeRTOS</GroupName>
           <Files>
             <File>
-              <FileName>heap_1.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\FreeRTOS\heap_1.c</FilePath>
-            </File>
-            <File>
               <FileName>list.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\FreeRTOS\list.c</FilePath>
@@ -521,6 +541,11 @@
               <FileName>timers.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\FreeRTOS\timers.c</FilePath>
+            </File>
+            <File>
+              <FileName>heap_1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FreeRTOS\heap_1.c</FilePath>
             </File>
           </Files>
         </Group>
