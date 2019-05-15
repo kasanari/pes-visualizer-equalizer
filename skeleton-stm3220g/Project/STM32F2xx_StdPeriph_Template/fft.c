@@ -18,22 +18,22 @@
 static uint8_t bit_rev_table[FFT_LENGTH];
 static float sine_table[FFT_LENGTH/2];
 static float cosine_table[FFT_LENGTH/2];
-xSemaphoreHandle buffer_switch_sem;
+xSemaphoreHandle buffer_switch_lock;
 
-uint16_t* audio_buffer_1;
-uint16_t* audio_buffer_2;
+uint16_t audio_buffer_1[FFT_LENGTH];
+uint16_t audio_buffer_2[FFT_LENGTH];
 
 uint8_t	 buffer_select = 1;
 
 uint32_t STM32_AudioRec_Update(uint8_t** pbuf, uint32_t* pSize) {
-	//portBASE_TYPE higherPrio;
+	static BaseType_t xHigherPriorityTaskWoken;
 	*pSize = FFT_LENGTH;
   *pbuf = (buffer_select) ? (uint8_t*)audio_buffer_1 : (uint8_t*)audio_buffer_2;
 	/* Toggle the buffer select */
   buffer_select = (buffer_select == 0) ? 1 : 0;
 	
-	//xSemaphoreGiveFromISR(buffer_switch_sem, &higherPrio);
-	//vPortYieldFromISR();
+	xSemaphoreGiveFromISR(buffer_switch_lock, &xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR( xHigherPriorityTaskWoken);
 	
 	return 0;
 }
@@ -187,8 +187,9 @@ static void FFTTask(void *params) {
 }
 
 void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals) {
-	//STM32_AudioRec_Init(SAMPLE_RATE_44100, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
-	//STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
+	buffer_switch_lock = xSemaphoreCreateBinary();
+	STM32_AudioRec_Init(SAMPLE_RATE_22050, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
+	STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
 	BaseType_t xReturned;
 	xReturned = xTaskCreate(FFTTask, "fft", 1000, signals, uxPriority, NULL);
 	if( xReturned == pdPASS ) {
