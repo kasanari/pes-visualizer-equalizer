@@ -113,6 +113,7 @@ void interfaceTask(void* params){
 			xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
 			LCD_setColors(White, Black);
 			LCD_write(40, 12, ctx->graphs[*(ctx->graph_index)].name, Horizontal);
+			
 			xSemaphoreGive(ctx->lcd_lock);
 			prevIndex = *(ctx->graph_index);
 		}

@@ -24,9 +24,11 @@ uint16_t sine[200];
 uint16_t last_freq_values[MAX_NUM_FREQ_VALUES];
 uint8_t first_time;
 uint16_t frequencies_to_plot[FFT_LENGTH];
-graph_t graph;
+graph_setting_t graph;
+drawGraphFunction current_draw_func;
 
-void graph_clear_all(graph_t *graph) {
+
+void graph_clear_all(graph_setting_t *graph) {
 	int i;
 	LCD_setColors(Black, Black);
 	LCD_fillRect(graph->start_x, graph->start_y, graph->width, graph->height);
@@ -35,7 +37,13 @@ void graph_clear_all(graph_t *graph) {
 	}
 }
 
-void run_graph(drawGraphFunction f, graph_t *graph) {
+void setDrawGraphFunction(drawGraphFunction func) {
+	if (current_draw_func != func) {
+		current_draw_func = func;
+	}
+}
+
+void run_graph(drawGraphFunction f, graph_setting_t *graph) {
 	int i;
 	if (!first_time) {
 		f(graph->freqs, graph);
@@ -47,7 +55,7 @@ void run_graph(drawGraphFunction f, graph_t *graph) {
 	}
 }
 
-void draw_simple_white_graph(uint16_t *freq_values, graph_t *graph) {
+void draw_simple_white_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	int16_t bar_diff, last_bar, bar;
 	for (i = 0; i < graph->num_freq; i++) {
@@ -66,7 +74,7 @@ void draw_simple_white_graph(uint16_t *freq_values, graph_t *graph) {
 
 
 
-void draw_simple_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
+void draw_simple_rainbow_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
@@ -85,7 +93,7 @@ void draw_simple_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	}
 }
 
-void draw_block_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
+void draw_block_rainbow_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
@@ -106,7 +114,7 @@ void draw_block_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	}
 }
 
-void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
+void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar, mirror_lightness;
@@ -134,7 +142,7 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	}
 }
 
-graph_t *setup_graph(
+graph_setting_t *setup_graph(
 	uint16_t _start_x, 
 	uint16_t _start_y, 
 	uint16_t _end_x, 
@@ -216,13 +224,13 @@ static void runFFTGraphTask(void *params) {
 	xSemaphoreGive(signals->graph_done_lock);
 	xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
 	float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
-	graph_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
+	graph_setting_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
 	for (;;) {
 		run_graph(draw_simple_rainbow_graph, graph);
-		//vTaskDelay(30 / portTICK_RATE_MS);
 		xSemaphoreGive(signals->graph_done_lock);
 		xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
 		float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
+		vTaskDelay(30 / portTICK_RATE_MS);
 	}
 }
 
