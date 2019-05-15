@@ -3,7 +3,7 @@
 #include "semphr.h"
 #include "global.h"
 
-#define MAX_NUM_FREQ_VALUES 32
+#define MAX_NUM_FREQ_VALUES FFT_LENGTH/2
 #define BAR_SPACING 3 
 
 /*
@@ -21,8 +21,9 @@
 uint16_t sine[200];
 uint16_t last_freq_values[MAX_NUM_FREQ_VALUES];
 uint8_t first_time;
-uint16_t frequencies_to_plot[FFT_LENGTH];
+uint16_t frequencies_to_plot[FFT_LENGTH/2];
 graph_t graph;
+uint16_t maximum = 1000;
 
 void graph_clear_all(graph_t *graph) {
 	int i;
@@ -193,9 +194,11 @@ void setup_default_graph() {
 	setup_graph(0, 0, WIDTH, HEIGHT, 20, 256, sine);
 }
 
-void float_to_int(float*float_buf, uint16_t*int_buf, int n, int mask) {
+void float_to_int(FLOAT_TYPE *float_buf, uint16_t*int_buf, int n, int mask) {
+	int temp;
 	for (int i = 0; i < n; i++) {
-		int_buf[i] = mask * float_buf[i];
+		temp = mask * float_buf[i];
+		int_buf[i] = (temp > maximum) ? maximum : temp; 
 	}
 }
 
@@ -221,16 +224,13 @@ uint16_t min(uint16_t *buf, size_t n) {
 
 static void runFFTGraphTask(void *params) {
 	FFT_signals_t *signals = (FFT_signals_t*)params;
-	xSemaphoreGive(signals->graph_done_lock);
-	xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
-	float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
-	graph_t *graph = setup_graph(0, 0, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
+	graph_t *graph = setup_graph(0, 0, WIDTH, HEIGHT, FFT_LENGTH/2, maximum, frequencies_to_plot);
 	for (;;) {
 		run_graph(draw_simple_rainbow_graph, graph);
 		//vTaskDelay(30 / portTICK_RATE_MS);
 		xSemaphoreGive(signals->graph_done_lock);
 		xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
-		float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
+		float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH/2, 1);
 	}
 }
 
