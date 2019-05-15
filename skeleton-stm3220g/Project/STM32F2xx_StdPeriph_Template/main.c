@@ -128,7 +128,7 @@ int main (void) {
 	plot_fft_graph(&signals);
 	
 	setupInterface(&ctx);
-	// setupTouch();
+	setupTouch(&graph_index);
 	printf("Setup complete ");  // this is redirected to the display
 
 	

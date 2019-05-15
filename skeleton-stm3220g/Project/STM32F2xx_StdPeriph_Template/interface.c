@@ -38,7 +38,6 @@ void LCD_write(uint16_t x, uint16_t y, char* ptr, uint8_t direction){
 		else
 			x = x + (Currentfont->Width);
 	}
-	
 }
 
 /* Drawing buttons < and >  on Line0 
@@ -81,20 +80,22 @@ void drawAllButtons() {
 void InitGraphs(graph_type_t *graphs, uint8_t *graph_index) {
   *graph_index = 0;
 	graphs[0].graph_func = draw_simple_white_graph;
-	graphs[0].name = "JaneDoe";
+	graphs[0].name = "JaneDoe    ";
 	graphs[1].graph_func = draw_simple_rainbow_graph;
 	graphs[1].name = "PlaceHolder";
 	graphs[2].graph_func = draw_block_rainbow_graph;
-	graphs[2].name = "JAY";
+	graphs[2].name = "JAY        ";
   graphs[3].graph_func = draw_block_mirror_rainbow_graph;
-	graphs[3].name = "Mirror";
+	graphs[3].name = "Mirror     ";
 }
+
 
 
 
 
 // Run interface
 void interfaceTask(void* params){
+	uint8_t prevIndex = NUM_OF_GRAPHS; 
 	context_t *ctx = (context_t *) params;
 	Currentfont = LCD_GetFont();
 	// Creating/registering buttons
@@ -108,7 +109,13 @@ void interfaceTask(void* params){
 	drawAllButtons();
 	xSemaphoreGive(ctx->lcd_lock);
 	for(;;){
-		
+		if (prevIndex != *(ctx->graph_index)) {
+			xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
+			LCD_setColors(White, Black);
+			LCD_write(40, 12, ctx->graphs[*(ctx->graph_index)].name, Horizontal);
+			xSemaphoreGive(ctx->lcd_lock);
+			prevIndex = *(ctx->graph_index);
+		}
 		STM_EVAL_LEDToggle(LED1);
 		vTaskDelay(400 / portTICK_RATE_MS);
 	}	

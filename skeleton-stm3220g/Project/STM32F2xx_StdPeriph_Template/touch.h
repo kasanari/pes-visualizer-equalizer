@@ -28,7 +28,7 @@ void rightToDown(void);
 
 void toggleOrange(void);
 
-void setupTouch(void);
+void setupTouch(uint8_t *graph_index);
 	
 #endif
 

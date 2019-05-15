@@ -3,8 +3,7 @@
 #include "semphr.h"
 TCallback callback[64];
 uint8_t callbacksNum=0;
-char title[3][13] = {"SimpleWhite ", "SimpleRainbo", "BlockRainbo "};
-uint8_t title_index = 0;
+uint8_t *graph_index_touch;
 
 TCallback *getCallbacks() {
 	return callback;
@@ -53,24 +52,23 @@ void touchTask(void* params){
 
 void leftToUp() {
 	STM_EVAL_LEDToggle(LED4);
-	if (title_index == 0) {
-		title_index = 2;
+	if (*graph_index_touch == 0) {
+		*graph_index_touch = NUM_OF_GRAPHS-1;
 	} else {
-		title_index = (title_index - 1) % 3;
+		*graph_index_touch = (*graph_index_touch - 1) % NUM_OF_GRAPHS;
 	}
-	writeTitle(title[title_index]);
 }
 
 void rightToDown(){
 	STM_EVAL_LEDToggle(LED2);
-	title_index = (title_index + 1 ) % 3 ; 
-	writeTitle(title[title_index]);
+	*graph_index_touch = (*graph_index_touch + 1 ) % NUM_OF_GRAPHS ; 
 }
 
 void toggleOrange(){
 	STM_EVAL_LEDToggle(LED2);
 }
 
-void setupTouch(void){
-	xTaskCreate( touchTask, "touchscreen", 100, NULL, 1, NULL);
+void setupTouch(uint8_t *graph_i){ 
+	graph_index_touch = graph_i; 
+	xTaskCreate( touchTask, "touchscreen", 100, graph_i, 1, NULL);
 }
