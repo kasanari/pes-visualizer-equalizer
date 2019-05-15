@@ -414,6 +414,8 @@ static void STM32_AudioRec_NVIC_Init(void)
   NVIC_InitTypeDef NVIC_InitStructure;
   
   /* Enable the Timer Interrupt to trigger the ADC */
+	NVIC_SetVectorTable( NVIC_VectTab_FLASH, 0x0 );
+	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
   NVIC_InitStructure.NVIC_IRQChannel = AUDIO_REC_TIM_IRQn;
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = AUDIO_REC_TIM_PRE_PRIO;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = AUDIO_REC_TIM_SUB_PRIO;
