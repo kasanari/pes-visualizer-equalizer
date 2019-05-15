@@ -96,6 +96,10 @@ xSemaphoreHandle fft_done;
 xSemaphoreHandle graph_done;
 	
 FFT_signals_t signals;
+
+uint8_t graph_index;	
+	
+graph_type_t graphs[NUM_OF_GRAPHS];
 context_t ctx;
 
 int main (void) {
@@ -116,7 +120,8 @@ int main (void) {
 	signals.graph_done_lock = graph_done;
 	
 	ctx.lcd_lock = lcdLock;
-	
+	ctx.graphs = graphs; 
+	ctx.graph_index = &graph_index;
 	printQueue = xQueueCreate(128, 1);
 	
 	setupFFT(1, &signals);

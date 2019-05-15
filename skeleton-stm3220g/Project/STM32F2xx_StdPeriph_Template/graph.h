@@ -10,6 +10,8 @@
 #include "task.h"
 #include "fft.h"
 
+#define NUM_OF_GRAPHS 4
+
 typedef struct graph {
 	uint16_t start_x, start_y, end_x, end_y, width, height, max_freq_value, step_width, mid_y;
 	uint8_t num_freq;

@@ -3,7 +3,6 @@
 #include "semphr.h"
 #include <string.h>
 #include "touch.h"
-
 #define BUTTON_PAD_X 8
 //LED - to check if system is alive
 sFONT *Currentfont;
@@ -65,9 +64,7 @@ void LCD_drawNonUpdateElements(void) {
 
 // Draw Title
 void LCD_drawUpdateElements(void){
-	// drawButton( 1, 1, "<", 2, &Left, leftToUp);
-	// drawButton( WIDTH - 80, 1, ">", 2, &Right, rightToDown);
-	// drawButton( WIDTH - 40, 1, "EQ", 2, &Mode, toggleOrange);
+	
 	// writeTitle ("Visualiser"); 
 }
 
@@ -78,6 +75,23 @@ void drawAllButtons() {
 		drawButton(&callback[i].button);
 	}
 }
+
+// Initialising graphs 
+
+void InitGraphs(graph_type_t *graphs, uint8_t *graph_index) {
+  *graph_index = 0;
+	graphs[0].graph_func = draw_simple_white_graph;
+	graphs[0].name = "JaneDoe";
+	graphs[1].graph_func = draw_simple_rainbow_graph;
+	graphs[1].name = "PlaceHolder";
+	graphs[2].graph_func = draw_block_rainbow_graph;
+	graphs[2].name = "JAY";
+  graphs[3].graph_func = draw_block_mirror_rainbow_graph;
+	graphs[3].name = "Mirror";
+}
+
+
+
 
 // Run interface
 void interfaceTask(void* params){
@@ -102,6 +116,7 @@ void interfaceTask(void* params){
 
 // Interface Setup. To be called in the main.c
 void setupInterface(context_t *ctx) {
+	InitGraphs(ctx->graphs, ctx->graph_index);
 	xTaskCreate( interfaceTask, "interface", 100, ctx, 1, NULL);
 }
 
