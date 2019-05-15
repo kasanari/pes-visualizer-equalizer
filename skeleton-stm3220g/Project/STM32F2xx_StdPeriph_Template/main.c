@@ -42,42 +42,38 @@
 static __IO uint32_t TimingDelay;
 RCC_ClocksTypeDef RCC_Clocks;
 
-xSemaphoreHandle lcdLock;
+xSemaphoreHandle lcdLock; 
+
+void setupHW() {
+		/*!< At this stage the microcontroller clock setting is already configured, 
+       this is done through SystemInit() function which is called from startup
+       file (startup_stm32f2xx.s) before to branch to application main.
+       To reconfigure the default setting of SystemInit() function, refer to
+       system_stm32f2xx.c file
+     */ 
+		/*Initialize the LEDs*/
+		STM_EVAL_LEDInit(LED1);
+		STM_EVAL_LEDInit(LED2);
+		STM_EVAL_LEDInit(LED3);
+		STM_EVAL_LEDInit(LED4);
+
+		/* SysTick end of count event each 1ms */
+		RCC_GetClocksFreq(&RCC_Clocks);
+		SysTick_Config(RCC_Clocks.HCLK_Frequency);
 
 
 }
-  LCD_setTextColor(Red);
+  /* LCD Module init */
+static void initDisplay () {
+	LCD_init();
+	LCD_setTextColor(White);
 	LCD_setBackColor(Black);
   LCD_clear(Black);
 	LCD_SetFont(&Font16x24);
-  LCD_init();
-
   lcdLock = xSemaphoreCreateMutex();
-  /* LCD Module init */
-static void initDisplay () {
+}
 
 xQueueHandle printQueue;
-
-static void printTask(void *params) {
-  unsigned char str[21] = "                    ";
-  portTickType lastWakeTime = xTaskGetTickCount();
-  int i;
-
-  for (;;) {
-    xSemaphoreTake(lcdLock, portMAX_DELAY);
-    LCD_setTextColor(Black);
-    LCD_displayStringLn(Line9, str);
-    xSemaphoreGive(lcdLock);
-
-    for (i = 0; i < 19; ++i)
-	  str[i] = str[i+1];
-
-    if (!xQueueReceive(printQueue, str + 19, 0))
-	  str[19] = ' ';
-
-	vTaskDelayUntil(&lastWakeTime, 100 / portTICK_RATE_MS);
-  }
-}
 
 /* Retarget printing to the serial port 1 */
 
@@ -95,15 +91,17 @@ const float sine_imag[FFT_LENGTH] = {0.000000, 0.000000, 0.000000, 0.000000, 0.0
 float fft_out_real[FFT_LENGTH];
 float fft_out_imag[FFT_LENGTH];
 float fft_magnitude[FFT_LENGTH];
-	
+
 xSemaphoreHandle fft_done;
 xSemaphoreHandle graph_done;
 	
 FFT_signals_t signals;
+context_t ctx;
 
-int main (void){
+int main (void) {
   setupHW();
 	IOE_Config(); /*Needed for the touch screen functionality*/
+	initDisplay();
 	/* Attempt to create a semaphore. */
   fft_done = xSemaphoreCreateBinary();
 	graph_done = xSemaphoreCreateBinary();
@@ -117,10 +115,15 @@ int main (void){
 	signals.fft_done_lock = fft_done;
 	signals.graph_done_lock = graph_done;
 	
+	ctx.lcd_lock = lcdLock;
+	
 	printQueue = xQueueCreate(128, 1);
 	
-	setupInterface();
-	setupTouch();
+	setupFFT(1, &signals);
+	plot_fft_graph(&signals);
+	
+	setupInterface(&ctx);
+	// setupTouch();
 	printf("Setup complete ");  // this is redirected to the display
 
 	

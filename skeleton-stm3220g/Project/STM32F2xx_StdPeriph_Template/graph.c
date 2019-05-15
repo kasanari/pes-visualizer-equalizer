@@ -3,8 +3,10 @@
 #include "semphr.h"
 #include "global.h"
 
-#define MAX_NUM_FREQ_VALUES 32
+#define MAX_NUM_FREQ_VALUES 64
 #define BAR_SPACING 3 
+
+#define LIMIT_UPPER_VALUE(val, lim) (val < lim ? val : lim)
 
 /*
 	
@@ -38,7 +40,7 @@ void run_graph(drawGraphFunction f, graph_t *graph) {
 	if (!first_time) {
 		f(graph->freqs, graph);
 		for (i = 0; i < graph->num_freq; i++) {
-			last_freq_values[i] = graph->freqs[i];
+			last_freq_values[i] = LIMIT_UPPER_VALUE(graph->freqs[i], graph->max_freq_value);
 		}
 	} else {
 		first_time = 0;
@@ -62,13 +64,15 @@ void draw_simple_white_graph(uint16_t *freq_values, graph_t *graph) {
 	}
 }
 
+
+
 void draw_simple_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
 	for (i = 0; i < graph->num_freq; i++) {
 		last_bar 	= (graph->height*last_freq_values[i]) /	graph->max_freq_value;
-		bar 			= (graph->height*freq_values[i])			 /	graph->max_freq_value;
+		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) /	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
 			color = getColorFromHSL((360*bar)/graph->max_freq_value, 100, 50);
@@ -129,18 +133,6 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_t *graph) {
 		}
 	}
 }
-
-static void runGraphTask(void *params) {
-	uint8_t counter; /* only for now to have a moving sine */
-	const uint8_t max_count = 100; /* only for now */
-	graph_t *graph = (graph_t *) params;
-	for (;;) {
-		run_graph(draw_simple_rainbow_graph, graph);
-		counter = (counter+1)%max_count;
-		vTaskDelay(30 / portTICK_RATE_MS);
-	}
-}
-
 
 graph_t *setup_graph(
 	uint16_t _start_x, 
@@ -224,7 +216,7 @@ static void runFFTGraphTask(void *params) {
 	xSemaphoreGive(signals->graph_done_lock);
 	xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
 	float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
-	graph_t *graph = setup_graph(0, 0, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
+	graph_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
 	for (;;) {
 		run_graph(draw_simple_rainbow_graph, graph);
 		//vTaskDelay(30 / portTICK_RATE_MS);

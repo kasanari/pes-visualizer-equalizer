@@ -2,27 +2,27 @@
 #define _INTERFACE_H_
 #include "stm322xg_eval_ioe.h"
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "task.h"
+
+typedef struct context {
+	xSemaphoreHandle lcd_lock;
+} context_t;
 
 enum status { 
 	disable = 0 , 
 	enable = 1
 };
 
-enum titlebar {
-	type = 0,
-	mode = 1
- };
-
 struct button { 
 	int status ;
-	char* info;
+	char* name;
 	uint16_t x,y,width,height;
 }; 
 
 typedef struct button Button_t; 
 
-void setupInterface(void);
+void setupInterface(context_t *ctx);
 
 void writeTitle (char* ptr);
 

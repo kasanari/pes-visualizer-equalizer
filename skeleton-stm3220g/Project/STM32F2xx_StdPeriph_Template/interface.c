@@ -4,51 +4,40 @@
 #include <string.h>
 #include "touch.h"
 
+#define BUTTON_PAD_X 8
 //LED - to check if system is alive
-xSemaphoreHandle lcd_temp;
 sFONT *Currentfont;
 
-void setupHW(void) {
-	STM_EVAL_LEDInit(LED1);
-	STM_EVAL_LEDInit(LED2);
-	STM_EVAL_LEDInit(LED3);
-	STM_EVAL_LEDInit(LED4);
+
+void registerButton(uint16_t x, uint16_t y, char *name, void (*func_call)) {
+	Button_t button;
+	button.name = name;
+	button.x = x; 
+	button.y = y; 
+	button.width = BUTTON_PAD_X*2 + strlen(name) * Currentfont->Width; 
+	button.height = 2*Currentfont->Height;
+	
+	uint16_t left = button.x;
+	uint16_t right = button.x + button.width;
+	uint16_t upper = button.y;
+	uint16_t lower = button.y + button.height;
+	
+	registerTCallback(left, right, lower, upper, button, func_call);
 }
-
-
-// LED - Task
-void ledTask(void* params){
-	for(; ;){
-		STM_EVAL_LEDToggle(LED1);
-		vTaskDelay(400 / portTICK_RATE_MS);
-	}	
-}
-
-void setupLCD(){
-	LCD_init();
-	lcd_temp = xSemaphoreCreateMutex();
-	xSemaphoreTake( lcd_temp, portMAX_DELAY); 
-  LCD_clear(Black);
-  LCD_setColors(White,Black);
-	LCD_SetFont(&Font16x24);
-	xSemaphoreGive(lcd_temp);
-	Currentfont = LCD_GetFont();
-}
-
 
 /* Write anywhere on the screen
 PRE : row is line number , x is the column with origin at top right,
 			direction is either veritcal or horizontal
 */
-void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction){
+void LCD_write(uint16_t x, uint16_t y, char* ptr, uint8_t direction){
 	
 	while(*ptr != '\0'){
-	  LCD_DisplayChar( LINE(row), x, (uint8_t)*ptr);
+	  LCD_DisplayChar(y, WIDTH - x, (uint8_t)*ptr);
 		ptr++;
 		if (direction == LCD_DIR_VERTICAL) 
-			row++;
+			y += Currentfont->Height;
 		else
-			x = x - (Currentfont->Width);
+			x = x + (Currentfont->Width);
 	}
 	
 }
@@ -58,19 +47,11 @@ void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction){
 	 Or rectangles side(s) get removed.	
 	 		
 */
-void drawButton( uint16_t x, uint16_t y, char* ptr, uint8_t multiplier, Button_t *button, void (*func_call)){
+void drawButton(Button_t *button){
 	uint16_t W, H; 
-	W = Currentfont->Width;
-	H = Currentfont->Height;
-	button->status = disable;
-	button->info = ptr;
-	button->x = x; 
-	button->y = y; 
-	button->width = multiplier*W; 
-	button->height = multiplier*H;
-	LCD_write( 0, WIDTH - x, ptr, Horizontal); 
-	LCD_drawRect( x, y, button->width, button->height);
-	registerTCallback( x, x + button->width, y + button->height, y, button, func_call);
+	
+	LCD_write( button->x + BUTTON_PAD_X, button->y + Currentfont->Height/2, button->name, Horizontal); 
+	LCD_drawRect( button->x, button->y, button->width, button->height);
 }
 
 
@@ -78,24 +59,49 @@ void writeTitle (char* ptr){
 	LCD_write( 1, WIDTH - 40, ptr, Horizontal); 
 }
 
+void LCD_drawNonUpdateElements(void) {
+	LCD_drawLine(0, 52, WIDTH, Horizontal); // +5 to get lagom
+}
+
 // Draw Title
-void LCD_drawTitleBar(void){
-	Button_t Right, Left, Mode; 
+void LCD_drawUpdateElements(void){
+	// drawButton( 1, 1, "<", 2, &Left, leftToUp);
+	// drawButton( WIDTH - 80, 1, ">", 2, &Right, rightToDown);
+	// drawButton( WIDTH - 40, 1, "EQ", 2, &Mode, toggleOrange);
+	// writeTitle ("Visualiser"); 
+}
+
+void drawAllButtons() {
+	TCallback *callback = getCallbacks();
+	uint8_t callbacksNum = getCallbackNum();
+	for (int i = 0; i < callbacksNum; i++) {
+		drawButton(&callback[i].button);
+	}
+}
+
+// Run interface
+void interfaceTask(void* params){
+	context_t *ctx = (context_t *) params;
+	Currentfont = LCD_GetFont();
+	// Creating/registering buttons
+	registerButton(1, 1, "<", leftToUp);
+	registerButton(WIDTH - 90, 1, ">", rightToDown);
+	registerButton(WIDTH - 50, 1, "EQ", toggleOrange);
 	
-	xSemaphoreTake( lcd_temp, portMAX_DELAY);
-	LCD_drawLine( 0, Line2, WIDTH,Horizontal); // +5 to get lagom
-	drawButton( 1, 1, "<", 2, &Left, leftToUp);
-	drawButton( WIDTH - 80, 1, ">", 2, &Right, rightToDown);
-	drawButton( WIDTH - 40, 1, "EQ", 2, &Mode, toggleOrange);
-	writeTitle ("Visualiser"); 
-	xSemaphoreGive(lcd_temp);	
+	xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
+	LCD_setColors(White, Black);
+	LCD_drawNonUpdateElements();
+	drawAllButtons();
+	xSemaphoreGive(ctx->lcd_lock);
+	for(;;){
+		
+		STM_EVAL_LEDToggle(LED1);
+		vTaskDelay(400 / portTICK_RATE_MS);
+	}	
 }
 
 // Interface Setup. To be called in the main.c
-void setupInterface(void){
-	setupHW();	
-	setupLCD();
-	LCD_drawTitleBar();
-	xTaskCreate( ledTask, "led", 100, NULL, 1, NULL);
+void setupInterface(context_t *ctx) {
+	xTaskCreate( interfaceTask, "interface", 100, ctx, 1, NULL);
 }
 

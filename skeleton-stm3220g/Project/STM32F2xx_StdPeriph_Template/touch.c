@@ -6,7 +6,15 @@ uint8_t callbacksNum=0;
 char title[3][13] = {"SimpleWhite ", "SimpleRainbo", "BlockRainbo "};
 uint8_t title_index = 0;
 
-void registerTCallback(uint16_t left, uint16_t right, uint16_t lower, uint16_t upper, Button_t *button, void (*func)(void)) {
+TCallback *getCallbacks() {
+	return callback;
+}
+
+uint8_t getCallbackNum() {
+	return callbacksNum;
+}
+
+void registerTCallback(uint16_t left, uint16_t right, uint16_t lower, uint16_t upper, Button_t button, void (*func)(void)) {
   callback[callbacksNum].lower    = lower;
   callback[callbacksNum].upper    = upper;
   callback[callbacksNum].left     = left;
@@ -33,7 +41,7 @@ void touchTask(void* params){
 		    callback[i].right >= ts_state->X &&
 		    callback[i].lower >= ts_state->Y &&
 		    callback[i].upper <= ts_state->Y){
-					callback[i].button->status = enable;
+					callback[i].button.status = enable;
 					callback[i].func();
 				}	
 	  }													
