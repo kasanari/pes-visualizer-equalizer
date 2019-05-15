@@ -326,6 +326,8 @@
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
             <uGnu>0</uGnu>
+            <uC99>0</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -436,6 +438,26 @@
               <FileName>fft_test.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\fft_test.c</FilePath>
+            </File>
+            <File>
+              <FileName>interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>interface.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface.h</FilePath>
+            </File>
+            <File>
+              <FileName>touch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\touch.c</FilePath>
+            </File>
+            <File>
+              <FileName>touch.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\touch.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -68,3 +68,11 @@ RTE_Components.h
 *.scvd
 *.iex
 *.i
+
+RTE_Components.h
+*.axf
+*.scvd
+*.iex
+
+
+*.YashSeeta
