@@ -74,16 +74,20 @@ void drawButton( uint16_t x, uint16_t y, char* ptr, uint8_t multiplier, Button_t
 }
 
 
+void writeTitle (char* ptr){
+	LCD_write( 1, WIDTH - 40, ptr, Horizontal); 
+}
+
 // Draw Title
 void LCD_drawTitleBar(void){
 	Button_t Right, Left, Mode; 
 	
 	xSemaphoreTake( lcd_temp, portMAX_DELAY);
 	LCD_drawLine( 0, Line2, WIDTH,Horizontal); // +5 to get lagom
-	drawButton( 1, 1, "<", 2, &Left, toggleBlue);
-	drawButton( WIDTH - 80, 1, ">", 2, &Right, toggleOrange);
+	drawButton( 1, 1, "<", 2, &Left, leftToUp);
+	drawButton( WIDTH - 80, 1, ">", 2, &Right, rightToDown);
 	drawButton( WIDTH - 40, 1, "EQ", 2, &Mode, toggleOrange);
-	LCD_write( 1, WIDTH - 40, "Visualizer", Horizontal); 
+	writeTitle ("Visualiser"); 
 	xSemaphoreGive(lcd_temp);	
 }
 

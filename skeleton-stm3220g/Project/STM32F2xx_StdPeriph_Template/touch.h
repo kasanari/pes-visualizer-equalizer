@@ -18,11 +18,13 @@ void registerTCallback(
 	void (*func)(void)
 );
 
-void toggleBlue(void);
+void leftToUp(void);
 
-void toggleOrange(void);	
+void rightToDown(void);	
+
+void toggleOrange(void);
 
 void setupTouch(void);
-
+	
 #endif
 

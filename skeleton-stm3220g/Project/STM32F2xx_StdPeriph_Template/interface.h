@@ -24,5 +24,9 @@ typedef struct button Button_t;
 
 void setupInterface(void);
 
+void writeTitle (char* ptr);
+
+void LCD_write( uint16_t row, uint16_t x, char* ptr, uint8_t direction);
+
 #endif
 
