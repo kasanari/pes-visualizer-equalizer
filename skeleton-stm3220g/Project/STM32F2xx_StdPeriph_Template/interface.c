@@ -80,13 +80,13 @@ void drawAllButtons() {
 void InitGraphs(graph_type_t *graphs, uint8_t *graph_index) {
   *graph_index = 0;
 	graphs[0].graph_func = draw_simple_white_graph;
-	graphs[0].name = "JaneDoe    ";
+	graphs[0].name = "White      ";
 	graphs[1].graph_func = draw_simple_rainbow_graph;
-	graphs[1].name = "PlaceHolder";
+	graphs[1].name = "Rainbow    ";
 	graphs[2].graph_func = draw_block_rainbow_graph;
 	graphs[2].name = "JAY        ";
   graphs[3].graph_func = draw_block_mirror_rainbow_graph;
-	graphs[3].name = "Mirror     ";
+	graphs[3].name = "Mirrored   ";
 }
 
 
