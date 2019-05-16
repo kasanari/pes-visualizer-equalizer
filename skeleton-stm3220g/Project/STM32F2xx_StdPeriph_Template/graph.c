@@ -24,7 +24,8 @@ uint16_t sine[200];
 uint16_t last_freq_values[MAX_NUM_FREQ_VALUES];
 uint8_t first_time;
 uint16_t frequencies_to_plot[FFT_LENGTH];
-graph_setting_t graph;
+graph_setting_t graph_info;
+uint8_t last_graph_index;
 drawGraphFunction current_draw_func;
 
 
@@ -60,7 +61,7 @@ void draw_simple_white_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	int16_t bar_diff, last_bar, bar;
 	for (i = 0; i < graph->num_freq; i++) {
 		last_bar 	= (graph->height*last_freq_values[i])/	graph->max_freq_value;
-		bar 			= (graph->height*freq_values[i])			/	graph->max_freq_value;
+		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) /	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
 			LCD_setColors(White, White);		
@@ -97,16 +98,19 @@ void draw_block_rainbow_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar;
-	uint8_t block_height = 10;
-	uint8_t block_diff = block_height - 3;
+	uint8_t block_height = 5;
+	uint8_t block_diff = block_height - 2;
 	for (i = 0; i < graph->num_freq; i++) {
-		last_bar 	= (graph->height*last_freq_values[i]) /	graph->max_freq_value;
-		bar 			= (graph->height*freq_values[i])			 /	graph->max_freq_value;
+		last_bar 	= (graph->height*last_freq_values[i]) /	(block_height * graph->max_freq_value);
+		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) /	(block_height*graph->max_freq_value);
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, 50);
-			LCD_setColors(color, color);
-			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - bar*block_height, graph->step_width-BAR_SPACING, bar_diff*block_diff);
+			for(int j = last_bar; j < bar; j++) {
+				unsigned short hue = 300-(180*j*block_height)/graph->max_freq_value;
+				color = getColorFromHSL(hue, 100, 50);
+				LCD_setColors(color, color);
+				LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - (j+1)*block_height, graph->step_width-BAR_SPACING, block_diff);
+			}
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
 			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - last_bar*block_height, graph->step_width-BAR_SPACING, -bar_diff*(block_height));
@@ -118,22 +122,28 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_setting_t *gra
 	uint16_t i;
 	unsigned short color;
 	int16_t bar_diff, last_bar, bar, mirror_lightness;
-	uint8_t block_height = 30;
-	uint8_t block_diff = block_height - 10;
+	uint8_t block_height = 10;
+	uint8_t block_diff = block_height - 7;
 	
 	for (i = 0; i < graph->num_freq; i++) {
 		last_bar 	= (graph->height*last_freq_values[i])/	(block_height * graph->max_freq_value);
-		bar 			= (graph->height*freq_values[i])			/	(block_height * graph->max_freq_value);
+		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) / (block_height*graph->max_freq_value);
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, 50);
-			LCD_setColors(color, color);
-			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - bar*block_height/2, graph->step_width-BAR_SPACING, bar_diff*block_diff/2);
-			mirror_lightness = 40-6*bar;
-			mirror_lightness = mirror_lightness > 0 ? mirror_lightness : 0;
-			color = getColorFromHSL((360*bar*block_height)/graph->max_freq_value, 100, mirror_lightness);
-			LCD_setColors(color, color);
-			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y + (bar-1)*block_height/2, graph->step_width-BAR_SPACING, bar_diff*block_diff/2);
+			for (int j = last_bar; j < bar; j++) {
+				unsigned short hue = 300-(180*j*block_height)/graph->max_freq_value;
+				color = getColorFromHSL(hue, 100, 50);
+				LCD_setColors(color, color);
+				LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - j*block_height/2, graph->step_width-BAR_SPACING, block_diff);
+				
+				// Mirrored
+				mirror_lightness = 45-4*j;
+				if (mirror_lightness > 0) {
+					color = getColorFromHSL(hue, 50+mirror_lightness, mirror_lightness );
+					LCD_setColors(color, color);
+					LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y + (j+1)*block_height/2, graph->step_width-BAR_SPACING, block_diff);	
+				}
+			}
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
 			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - last_bar*block_height/2, graph->step_width-BAR_SPACING, -bar_diff*block_diff/2);
@@ -152,24 +162,24 @@ graph_setting_t *setup_graph(
 	uint16_t *_freq_array
 ) {
 	
-	graph.start_x = _start_x; 
-	graph.start_y = _start_y;
-	graph.end_x = _end_x;  
-	graph.end_y = _end_y;  
-	graph.num_freq = _num_freq;
-	graph.max_freq_value = _max_freq_value;
+	graph_info.start_x = _start_x; 
+	graph_info.start_y = _start_y;
+	graph_info.end_x = _end_x;  
+	graph_info.end_y = _end_y;  
+	graph_info.num_freq = _num_freq;
+	graph_info.max_freq_value = _max_freq_value;
 	
-	graph.width = _end_x - _start_x;
-	graph.height = _end_y - _start_y;	
-	graph.step_width = graph.width/_num_freq;
-	graph.mid_y = _start_y + graph.height/2;
-	graph.freqs = _freq_array;
+	graph_info.width = _end_x - _start_x;
+	graph_info.height = _end_y - _start_y;	
+	graph_info.step_width = graph_info.width/_num_freq;
+	graph_info.mid_y = _start_y + graph_info.height/2;
+	graph_info.freqs = _freq_array;
 	first_time = 1;
 	
 	// Set last frequency array to zero
-	graph_clear_all(&graph);
+	graph_clear_all(&graph_info);
 	//xTaskCreate(runGraphTask, "graph", 100, graph, 1, NULL);
-	return &graph;
+	return &graph_info;
 }
 
 
@@ -220,21 +230,28 @@ uint16_t min(uint16_t *buf, size_t n) {
 }
 
 static void runFFTGraphTask(void *params) {
-	FFT_signals_t *signals = (FFT_signals_t*)params;
-	xSemaphoreGive(signals->graph_done_lock);
-	xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
-	float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
+	context_t *ctx = (context_t*)params;
+	xSemaphoreGive(ctx->signals->graph_done_lock);
+	xSemaphoreTake(ctx->signals->fft_done_lock, portMAX_DELAY);
+	float_to_int(ctx->signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
 	graph_setting_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH, 100, frequencies_to_plot);
 	for (;;) {
-		run_graph(draw_simple_rainbow_graph, graph);
-		xSemaphoreGive(signals->graph_done_lock);
-		xSemaphoreTake(signals->fft_done_lock, portMAX_DELAY);
-		float_to_int(signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
+		xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
+		if (last_graph_index != *ctx->graph_index) {
+			graph_clear_all(graph);
+			last_graph_index = *ctx->graph_index;
+		}
+		run_graph(ctx->graphs[*ctx->graph_index].graph_func, graph);
+		xSemaphoreGive(ctx->lcd_lock);
+		xSemaphoreGive(ctx->signals->graph_done_lock);
+		xSemaphoreTake(ctx->signals->fft_done_lock, portMAX_DELAY);
+		float_to_int(ctx->signals->magnitude, frequencies_to_plot, FFT_LENGTH, 100);
 		vTaskDelay(30 / portTICK_RATE_MS);
 	}
 }
 
-void plot_fft_graph(FFT_signals_t *signals) {
-	xTaskCreate(runFFTGraphTask, "graph", 1000, signals, 1, NULL);
+void plot_fft_graph(context_t *ctx) {
+	last_graph_index = NUM_OF_GRAPHS;
+	xTaskCreate(runFFTGraphTask, "graph", 1000, ctx, 1, NULL);
 }
 

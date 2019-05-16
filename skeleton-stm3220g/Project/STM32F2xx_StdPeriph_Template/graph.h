@@ -21,6 +21,19 @@ typedef struct graph_setting {
 
 typedef void (*drawGraphFunction)(uint16_t*, graph_setting_t*);
 
+typedef struct graph_type {
+	drawGraphFunction graph_func;
+	char* name;
+} graph_type_t;
+
+
+typedef struct context {
+	xSemaphoreHandle lcd_lock;
+	graph_type_t *graphs;
+	uint8_t *graph_index;
+	FFT_signals_t *signals;
+} context_t;
+
 
 
 /*
@@ -38,7 +51,7 @@ graph_setting_t *setup_graph(
 
 void setup_default_graph(void);
 
-void plot_fft_graph(FFT_signals_t *signals);
+void plot_fft_graph(context_t *ctx);
 
 void graph_clear_all(graph_setting_t *graph);
 

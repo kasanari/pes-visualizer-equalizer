@@ -8,7 +8,7 @@
 sFONT *Currentfont;
 
 
-void registerButton(uint16_t x, uint16_t y, char *name, void (*func_call)) {
+void registerButton(uint16_t x, uint16_t y, char *name, void (*func_call)(void)) {
 	Button_t button;
 	button.name = name;
 	button.x = x; 

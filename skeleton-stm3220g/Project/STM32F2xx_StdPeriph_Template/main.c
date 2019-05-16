@@ -122,10 +122,11 @@ int main (void) {
 	ctx.lcd_lock = lcdLock;
 	ctx.graphs = graphs; 
 	ctx.graph_index = &graph_index;
+	ctx.signals = &signals;
 	printQueue = xQueueCreate(128, 1);
 	
 	setupFFT(1, &signals);
-	plot_fft_graph(&signals);
+	plot_fft_graph(&ctx);
 	
 	setupInterface(&ctx);
 	setupTouch(&graph_index);

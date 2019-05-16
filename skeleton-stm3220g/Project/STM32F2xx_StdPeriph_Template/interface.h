@@ -6,17 +6,6 @@
 #include "task.h"
 #include "graph.h"
 
-typedef struct graph_type {
-	drawGraphFunction graph_func;
-	char* name;
-} graph_type_t;
-
-typedef struct context {
-	xSemaphoreHandle lcd_lock;
-	graph_type_t *graphs;
-	uint8_t *graph_index;
-} context_t;
-
 enum status { 
 	disable = 0 , 
 	enable = 1
