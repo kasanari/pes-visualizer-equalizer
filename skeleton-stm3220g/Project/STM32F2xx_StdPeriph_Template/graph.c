@@ -81,14 +81,16 @@ void draw_simple_white_graph(uint16_t *freq_values, graph_setting_t *graph) {
 void draw_simple_rainbow_graph(uint16_t *freq_values, graph_setting_t *graph) {
 	uint16_t i;
 	unsigned short color;
+	short hue;
 	int16_t bar_diff, last_bar, bar;
 	for (i = 0; i < graph->num_freq; i++) {
+		hue = (360*i)/graph->num_freq;
+		color = getColorFromHSL(hue, 100, 50);
+		LCD_setColors(color, color);
 		last_bar 	= (graph->height*last_freq_values[i]) /	graph->max_freq_value;
 		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) /	graph->max_freq_value;
 		bar_diff 	= bar - last_bar;
 		if (bar_diff > 0) {
-			color = getColorFromHSL((360*bar)/graph->max_freq_value, 100, 50);
-			LCD_setColors(color, color);
 			LCD_fillRect(graph->start_x + i*graph->step_width, graph->end_y - bar, graph->step_width-BAR_SPACING, bar_diff);
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
