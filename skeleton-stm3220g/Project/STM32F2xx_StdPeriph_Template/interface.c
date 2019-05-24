@@ -4,7 +4,7 @@
 #include <string.h>
 #include "touch.h"
 #define BUTTON_PAD_X 8
-//LED - to check if system is alive
+
 sFONT *Currentfont;
 
 
