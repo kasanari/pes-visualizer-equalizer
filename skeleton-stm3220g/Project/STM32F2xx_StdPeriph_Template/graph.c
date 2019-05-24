@@ -127,14 +127,15 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_setting_t *gra
 	int16_t bar_diff, last_bar, bar, mirror_lightness;
 	uint8_t block_height = 10;
 	uint8_t block_diff = block_height - 7;
+	short hue;
 	
 	for (i = 0; i < graph->num_freq; i++) {
 		last_bar 	= (graph->height*last_freq_values[i])/	(block_height * graph->max_freq_value);
 		bar	= (graph->height * LIMIT_UPPER_VALUE(freq_values[i], graph->max_freq_value)) / (block_height*graph->max_freq_value);
 		bar_diff 	= bar - last_bar;
-		if (bar_diff > 0) {
+		if (bar_diff > 0) { 
 			for (int j = last_bar; j < bar; j++) {
-				unsigned short hue = 300-(180*j*block_height)/graph->max_freq_value;
+				hue = 240-15*j;
 				color = getColorFromHSL(hue, 100, 50);
 				LCD_setColors(color, color);
 				LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - j*block_height/2, graph->step_width-BAR_SPACING, block_diff);
@@ -149,8 +150,8 @@ void draw_block_mirror_rainbow_graph(uint16_t *freq_values, graph_setting_t *gra
 			}
 		} else if(bar_diff < 0) {
 			LCD_setColors(Black, Black);
-			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y - last_bar*block_height/2, graph->step_width-BAR_SPACING, -bar_diff*block_diff/2);
-			LCD_fillRect(graph->start_x + i*graph->step_width, graph->mid_y + (last_bar-1)*block_height/2, graph->step_width-BAR_SPACING, -bar_diff*block_diff/2);
+			LCD_fillRect(graph->start_x + i*graph->step_width, 	graph->mid_y - (last_bar-1)*block_height/2, graph->step_width-BAR_SPACING, 	-bar_diff*(block_height)/2-1);
+			LCD_fillRect(graph->start_x + i*graph->step_width, 	graph->mid_y + (bar+1)*block_height/2, 			graph->step_width-BAR_SPACING, 	-bar_diff*(block_height)/2-1);
 		}
 	}
 }
