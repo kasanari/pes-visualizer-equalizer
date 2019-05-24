@@ -16,21 +16,58 @@
 //#define DEFAULT_VOLUME  70    /* Default volume in % (Mute=0%, Max = 100%) in Logarithmic values      */                                        
 																									
 static uint8_t bit_rev_table[FFT_LENGTH];
-static float sine_table[FFT_LENGTH/2];
-static float cosine_table[FFT_LENGTH/2];
+static FLOAT_TYPE sine_table[FFT_LENGTH/2];
+static FLOAT_TYPE cosine_table[FFT_LENGTH/2];
 xSemaphoreHandle buffer_switch_lock;
+
+xSemaphoreHandle buffer1_lock;
+xSemaphoreHandle buffer2_lock;
+
+xSemaphoreHandle fft_input_lock;
 
 uint16_t audio_buffer_1[FFT_LENGTH];
 uint16_t audio_buffer_2[FFT_LENGTH];
+uint16_t offset[FFT_LENGTH];
 
-uint8_t	 buffer_select = 1;
+uint16_t fft_input[FFT_LENGTH];
+
+uint8_t	 buffer_select = 0;
+
+bool init = true;
+
+void copy_values(uint16_t *dest, uint16_t *src, size_t n) {
+	for (int i = 0; i < n; i++) {
+		dest[i] = src[i];
+	}
+}
 
 uint32_t STM32_AudioRec_Update(uint8_t** pbuf, uint32_t* pSize) {
 	static BaseType_t xHigherPriorityTaskWoken;
 	*pSize = FFT_LENGTH;
-  *pbuf = (buffer_select) ? (uint8_t*)audio_buffer_1 : (uint8_t*)audio_buffer_2;
-	/* Toggle the buffer select */
-  buffer_select = (buffer_select == 0) ? 1 : 0;
+	
+	if (init) {
+		copy_values(offset, audio_buffer_1, FFT_LENGTH);
+		init = false;
+	}
+	
+	if (buffer_select == 0)  { // buf1 has been filled with values
+		if ( xSemaphoreTakeFromISR(buffer2_lock, &xHigherPriorityTaskWoken) == pdTRUE ) { // Check if buf2 is available for writing
+				 *pbuf = (uint8_t*)audio_buffer_2; // If it is, switch to writing to buf2
+					buffer_select = 1; // indicate buf1 as available for reading
+					xSemaphoreGiveFromISR(buffer1_lock, &xHigherPriorityTaskWoken); // Set buf1 as available
+       } else {
+				 *pbuf = (uint8_t*)audio_buffer_1; // Otherwise, keep writing to buf1
+			 } 
+	} else { // buf2 has been filled with values
+			if ( xSemaphoreTakeFromISR( buffer1_lock, &xHigherPriorityTaskWoken) == pdTRUE ) { // Check if buf1 is available
+				 *pbuf = (uint8_t*)audio_buffer_1; // If it is, switch to writing to buf1
+					buffer_select = 0; // indicate buf2 as available for reading
+					xSemaphoreGiveFromISR(buffer2_lock, &xHigherPriorityTaskWoken); // Set buf2 as available
+      } else {
+				 *pbuf = (uint8_t*)audio_buffer_2; // Otherwise, keep writing to buf2
+			}
+	}
+	
 	
 	xSemaphoreGiveFromISR(buffer_switch_lock, &xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR( xHigherPriorityTaskWoken);
@@ -52,7 +89,7 @@ static uint16_t reverse_bits(uint16_t bits, uint16_t n_bits) {
 
 // (a + ib)(c + id) = (ac - bd) + i(ad + bc)
 
-void complex_mul(float a, float b, float c, float d, float *result_r, float *result_i) {
+void complex_mul(FLOAT_TYPE a, FLOAT_TYPE b, FLOAT_TYPE c, FLOAT_TYPE d, FLOAT_TYPE *result_r, FLOAT_TYPE *result_i) {
 	*result_r = a*c - b*d;
 	*result_i = a*d + b*c;
 }
@@ -82,14 +119,14 @@ bool FFT_Init(int n) {
 
 }
 
-bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
+bool FFT_Int(uint16_t *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *real_out, FLOAT_TYPE *imag_out, uint16_t fft_length) {
 	uint8_t levels = 0;
 	uint8_t i, j, k;
-	float w_m_r, w_m_i, w_i, w_r, t_r, t_i, u_i, u_r;
+	FLOAT_TYPE w_m_r, w_m_i, w_i, w_r, t_r, t_i, u_i, u_r;
 	uint8_t rev_index;
 	uint8_t m;
-	float *A_real = real_out;
-	float *A_imag = imag_out;
+	FLOAT_TYPE *A_real = real_out;
+	FLOAT_TYPE *A_imag = imag_out;
 	//uint16_t input[4] = {2, 1, 0, 1};
 	
 	for (i = fft_length; i > 1; i >>= 1) { // Take the two-logarithm of fft_length to determine number of steps
@@ -142,14 +179,74 @@ bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint1
 	return true;
 }
 
-void complex_abs(float *real_in, float *imag_in, float *magnitude, uint16_t length) {
+bool FFT(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *real_out, FLOAT_TYPE *imag_out, uint16_t fft_length) {
+	uint8_t levels = 0;
+	uint8_t i, j, k;
+	FLOAT_TYPE w_m_r, w_m_i, w_i, w_r, t_r, t_i, u_i, u_r;
+	uint8_t rev_index;
+	uint8_t m;
+	FLOAT_TYPE *A_real = real_out;
+	FLOAT_TYPE *A_imag = imag_out;
+	//uint16_t input[4] = {2, 1, 0, 1};
+	
+	for (i = fft_length; i > 1; i >>= 1) { // Take the two-logarithm of fft_length to determine number of steps
+		levels++;
+	}
+	
+	if ((1U << levels) != fft_length) { // Verify that fft_length is an exponential of 2
+		return false;
+	}
+	
+	for (i = 0; i < fft_length; i++) {
+		rev_index = bit_rev_table[i];
+		A_real[rev_index] = real_in[i];
+		A_imag[rev_index] = imag_in[i];
+	}
+	
+	for (i = 0; i < levels; i++) {
+		m = 1 << (i+1);
+		
+		// w_m = cos((2*PI)/m) - i*sin((2*PI)/m)
+		w_m_r = cosine_table[i];
+		w_m_i = sine_table[i]; 
+
+		for (k = 0; k < fft_length; k += m) {
+			// w = 1
+			w_r = 1;
+			w_i = 0;
+			for (j = 0; j < m/2; j++) {
+
+				complex_mul(w_r, w_i, A_real[k + j + m/2], A_imag[k + j + m/2], &t_r, &t_i);
+
+				// Real part
+				u_r = A_real[k + j];
+				A_real[k + j] = u_r + t_r;
+				A_real[k + j + m/2] = u_r - t_r;
+				
+				// Imaginary part
+				u_i = A_imag[k + j];
+				A_imag[k + j] = u_i + t_i;
+				A_imag[k + j + m/2] = u_i - t_i;
+				
+				// Complex multiplication to get w = w*w_m
+				
+				complex_mul(w_r, w_i, w_m_r, w_m_i, &w_r, &w_i);
+
+			}
+		}
+	}
+	
+	return true;
+}
+
+void complex_abs(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *magnitude, uint16_t length) {
 	for (int i = 0; i < length; i++) {
-		magnitude[i] = sqrt(real_in[i]*real_in[i]+imag_in[i]*imag_in[i]);
+		magnitude[i] = sqrtf(real_in[i]*real_in[i]+imag_in[i]*imag_in[i]);
 	}
 }
 
 
-bool inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length) {
+bool inverse_FFT(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *real_out, FLOAT_TYPE *imag_out, uint16_t fft_length) {
 	bool status;
 	int i;
 	status = FFT(imag_in, real_in, imag_out, real_out, fft_length);
@@ -164,20 +261,40 @@ bool inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_ou
 	}
 }
 
+void copy_values_offset(uint16_t *dest, uint16_t *src, uint16_t *offset, size_t n) {
+	int temp;
+	for (int i = 0; i<n; i++) {
+		temp = src[i] - offset[i];
+		dest[i] = (temp < 0) ? 0 : temp;
+	}
+}
+
 static void FFTTask(void *params) {
 		volatile FFT_signals_t *signals = (FFT_signals_t*)params;
 		bool status;
 		if (FFT_Init(FFT_LENGTH)) {
 	for (;;) {
-				status = FFT(signals->real_input, signals->imag_input, signals->real_output, signals->imag_output, FFT_LENGTH);
+		
+				xSemaphoreTake(buffer_switch_lock, portMAX_DELAY);
+		
+				if (buffer_select == 1) {
+					xSemaphoreTake(buffer1_lock, portMAX_DELAY); // Set buf1 as in use
+					copy_values_offset(fft_input, audio_buffer_1, offset, FFT_LENGTH);
+					xSemaphoreGive(buffer1_lock); // Give access to buf1
+				} else {
+					xSemaphoreTake(buffer2_lock, portMAX_DELAY); // Set buf2 as in use
+					copy_values_offset(fft_input, audio_buffer_2, offset, FFT_LENGTH);
+					xSemaphoreGive(buffer2_lock); // Give access to buf2
+				}
+					status = FFT_Int(fft_input, signals->imag_input, signals->real_output, signals->imag_output, FFT_LENGTH);
+
 				if (status == false) {
 					printf("FFT failed");
 				} else {
 					xSemaphoreTake(signals->graph_done_lock, portMAX_DELAY);
-					complex_abs(signals->real_output, signals->imag_output, signals->magnitude, FFT_LENGTH);
+					complex_abs(signals->real_output, signals->imag_output, signals->magnitude, FFT_LENGTH/2);
 					xSemaphoreGive(signals->fft_done_lock);
 				}
-			vTaskDelay(30 / portTICK_RATE_MS);
 	}
 		} else {
 			printf("FFT initialization failed");
@@ -188,8 +305,17 @@ static void FFTTask(void *params) {
 
 void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals) {
 	buffer_switch_lock = xSemaphoreCreateBinary();
-	STM32_AudioRec_Init(SAMPLE_RATE_22050, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
-	STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
+	buffer1_lock = xSemaphoreCreateBinary();
+	buffer2_lock = xSemaphoreCreateBinary();
+	xSemaphoreGive(buffer1_lock);
+	xSemaphoreGive(buffer2_lock);
+	STM32_AudioRec_Init(SAMPLE_FREQ, DEFAULT_IN_BIT_RESOLUTION, DEFAULT_IN_CHANNEL_NBR);
+	if (buffer_select == 0) {
+		STM32_AudioRec_Start((uint8_t*)audio_buffer_1, FFT_LENGTH);
+	} else {
+		STM32_AudioRec_Start((uint8_t*)audio_buffer_2, FFT_LENGTH);
+	}
+	
 	BaseType_t xReturned;
 	xReturned = xTaskCreate(FFTTask, "fft", 1000, signals, uxPriority, NULL);
 	if( xReturned == pdPASS ) {

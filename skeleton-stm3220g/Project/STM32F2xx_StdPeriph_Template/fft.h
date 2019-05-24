@@ -4,14 +4,15 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
+#include "global.h"
 #include <stdbool.h>
 
 typedef struct FFT_signals {
-	float *real_input;
-	float *imag_input;
-	float *real_output;
-	float *imag_output;
-	float *magnitude;
+	FLOAT_TYPE *real_input;
+	FLOAT_TYPE *imag_input;
+	FLOAT_TYPE *real_output;
+	FLOAT_TYPE *imag_output;
+	FLOAT_TYPE *magnitude;
 	xSemaphoreHandle fft_done_lock;
 	xSemaphoreHandle graph_done_lock;
 } FFT_signals_t;
@@ -19,11 +20,11 @@ typedef struct FFT_signals {
 
 bool FFT_Init(int n);
 
-bool FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length);
+bool FFT(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *real_out, FLOAT_TYPE *imag_out, uint16_t fft_length);
 
-void complex_abs(float *real_in, float *imag_in, float *magnitude, uint16_t length);
+void complex_abs(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *magnitude, uint16_t length);
 
-bool inverse_FFT(float *real_in, float *imag_in, float *real_out, float *imag_out, uint16_t fft_length);
+bool inverse_FFT(FLOAT_TYPE *real_in, FLOAT_TYPE *imag_in, FLOAT_TYPE *real_out, FLOAT_TYPE *imag_out, uint16_t fft_length);
 
 void setupFFT(unsigned portBASE_TYPE uxPriority, FFT_signals_t *signals);
 
