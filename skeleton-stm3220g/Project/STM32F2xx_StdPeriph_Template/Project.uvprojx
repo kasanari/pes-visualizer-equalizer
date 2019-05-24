@@ -184,7 +184,6 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>0</RvdsVP>
-            <RvdsMve>0</RvdsMve>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -436,6 +435,26 @@
               <FileName>fft_test.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\fft_test.c</FilePath>
+            </File>
+            <File>
+              <FileName>interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>interface.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\interface.h</FilePath>
+            </File>
+            <File>
+              <FileName>touch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\touch.c</FilePath>
+            </File>
+            <File>
+              <FileName>touch.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\touch.h</FilePath>
             </File>
           </Files>
         </Group>
