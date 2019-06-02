@@ -97,8 +97,8 @@ void interfaceTask(void* params){
 	context_t *ctx = (context_t *) params;
 	Currentfont = LCD_GetFont();
 	// Creating/registering buttons
-	registerButton(1, 1, "<", leftToUp);
-	registerButton(WIDTH - 90, 1, ">", rightToDown);
+	registerButton(1, 1, "<", selectPrevVisuliser);
+	registerButton(WIDTH - 90, 1, ">", selectNextVisuliser);
 	registerButton(WIDTH - 50, 1, "EQ", toggleOrange);
 	
 	xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);

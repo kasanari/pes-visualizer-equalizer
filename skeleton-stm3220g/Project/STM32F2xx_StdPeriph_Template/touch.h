@@ -22,9 +22,9 @@ TCallback *getCallbacks(void);
 
 uint8_t getCallbackNum(void);
 	
-void leftToUp(void);
+void selectPrevVisuliser(void);
 
-void rightToDown(void);	
+void selectNextVisuliser(void);	
 
 void toggleOrange(void);
 

@@ -50,7 +50,7 @@ void touchTask(void* params){
 }
 }
 
-void leftToUp() {
+void selectPrevVisuliser() {
 	STM_EVAL_LEDToggle(LED4);
 	if (*graph_index_touch == 0) {
 		*graph_index_touch = NUM_OF_GRAPHS-1;
@@ -59,8 +59,8 @@ void leftToUp() {
 	}
 }
 
-void rightToDown(){
-	STM_EVAL_LEDToggle(LED2);
+void selectNextVisuliser(){
+	STM_EVAL_LEDToggle(LED3);
 	*graph_index_touch = (*graph_index_touch + 1 ) % NUM_OF_GRAPHS ; 
 }
 
