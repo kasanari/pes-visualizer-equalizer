@@ -237,7 +237,7 @@ uint16_t min(uint16_t *buf, size_t n) {
 		return min;
 }
 
-static void runFFTGraphTask(void *params) {
+static void FFTGraphTask(void *params) {
 	context_t *ctx = (context_t*)params;
 	graph_setting_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH/2, maximum, frequencies_to_plot);
 	uint8_t current_graph_index;
@@ -259,6 +259,6 @@ static void runFFTGraphTask(void *params) {
 
 void plot_fft_graph(context_t *ctx) {
 	last_graph_index = NUM_OF_GRAPHS;
-	xTaskCreate(runFFTGraphTask, "graph", 1000, ctx, 1, NULL);
+	xTaskCreate(FFTGraphTask, "graph", 1000, ctx, 1, NULL);
 }
 
