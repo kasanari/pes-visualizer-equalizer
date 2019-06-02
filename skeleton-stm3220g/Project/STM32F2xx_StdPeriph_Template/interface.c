@@ -7,7 +7,8 @@
 
 sFONT *Currentfont;
 
-
+/* Add button to the callback list
+*/
 void registerButton(uint16_t x, uint16_t y, char *name, void (*func_call)(void)) {
 	Button_t button;
 	button.name = name;
@@ -25,8 +26,6 @@ void registerButton(uint16_t x, uint16_t y, char *name, void (*func_call)(void))
 }
 
 /* Write anywhere on the screen
-PRE : row is line number , x is the column with origin at top right,
-			direction is either veritcal or horizontal
 */
 void LCD_write(uint16_t x, uint16_t y, char* ptr, uint8_t direction){
 	
@@ -40,10 +39,10 @@ void LCD_write(uint16_t x, uint16_t y, char* ptr, uint8_t direction){
 	}
 }
 
+
 /* Drawing buttons < and >  on Line0 
    Write inside the button before drawing buttons.
 	 Or rectangles side(s) get removed.	
-	 		
 */
 void drawButton(Button_t *button){
 	uint16_t W, H; 
@@ -52,21 +51,20 @@ void drawButton(Button_t *button){
 	LCD_drawRect( button->x, button->y, button->width, button->height);
 }
 
-
+/*Write on the title
+*/
 void writeTitle (char* ptr){
 	LCD_write( 1, WIDTH - 40, ptr, Horizontal); 
 }
 
+/* Draw a line for the title bar
+*/
 void LCD_drawNonUpdateElements(void) {
-	LCD_drawLine(0, 52, WIDTH, Horizontal); // +5 to get lagom
+	LCD_drawLine(0, 52, WIDTH, Horizontal);
 }
 
-// Draw Title
-void LCD_drawUpdateElements(void){
-	
-	// writeTitle ("Visualiser"); 
-}
-
+/* Draw all buttons using the callback list
+*/
 void drawAllButtons() {
 	TCallback *callback = getCallbacks();
 	uint8_t callbacksNum = getCallbackNum();
