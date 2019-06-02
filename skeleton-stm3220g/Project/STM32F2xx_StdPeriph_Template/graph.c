@@ -240,13 +240,15 @@ uint16_t min(uint16_t *buf, size_t n) {
 static void runFFTGraphTask(void *params) {
 	context_t *ctx = (context_t*)params;
 	graph_setting_t *graph = setup_graph(0, 60, WIDTH, HEIGHT, FFT_LENGTH/2, maximum, frequencies_to_plot);
+	uint8_t current_graph_index;
 	for (;;) {
+		current_graph_index = *ctx->graph_index;
 		xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
-		if (last_graph_index != *ctx->graph_index) {
+		if (last_graph_index != current_graph_index) {
 			graph_clear_all(graph);
-			last_graph_index = *ctx->graph_index;
+			last_graph_index = current_graph_index;
 		}
-		run_graph(ctx->graphs[*ctx->graph_index].graph_func, graph);
+		run_graph(ctx->graphs[current_graph_index].graph_func, graph);
 		xSemaphoreGive(ctx->lcd_lock);
 		xSemaphoreGive(ctx->signals->graph_done_lock);
 		xSemaphoreTake(ctx->signals->fft_done_lock, portMAX_DELAY);
