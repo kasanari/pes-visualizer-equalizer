@@ -106,14 +106,15 @@ void interfaceTask(void* params){
 	LCD_drawNonUpdateElements();
 	drawAllButtons();
 	xSemaphoreGive(ctx->lcd_lock);
+	uint8_t current_graph_index;
 	for(;;){
-		if (prevIndex != *(ctx->graph_index)) {
+		current_graph_index = *ctx->graph_index;
+		if (prevIndex != current_graph_index) {
 			xSemaphoreTake(ctx->lcd_lock, portMAX_DELAY);
 			LCD_setColors(White, Black);
-			LCD_write(40, 12, ctx->graphs[*(ctx->graph_index)].name, Horizontal);
-			
+			LCD_write(40, 12, ctx->graphs[current_graph_index].name, Horizontal);
 			xSemaphoreGive(ctx->lcd_lock);
-			prevIndex = *(ctx->graph_index);
+			prevIndex = current_graph_index;
 		}
 		STM_EVAL_LEDToggle(LED1);
 		vTaskDelay(400 / portTICK_RATE_MS);
