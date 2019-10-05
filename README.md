@@ -1,5 +1,5 @@
 # pes-visualizer-equalizer
-An audio spectrum visualizer on a STM3220G-EVAL evaluation board made in a project for programming of embedded systems.
+An audio spectrum visualizer on a STM3220G-EVAL evaluation board made in a project for programming of embedded systems. The program was written in FreeRTOS.
 
 ![](images/visulizer.gif)
 
